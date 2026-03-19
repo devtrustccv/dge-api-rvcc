@@ -1,4 +1,4 @@
-package cv.dge.dge_api_rvcc.exception;
+package cv.dge.dge_api_rvcc.common.exception;
 
 public class ImportacaoInvalidaException extends RuntimeException {
 

@@ -1,4 +1,4 @@
-package cv.dge.dge_api_rvcc.entity;
+package cv.dge.dge_api_rvcc.persistence.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;

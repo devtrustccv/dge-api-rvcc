@@ -1,6 +1,6 @@
-package cv.dge.dge_api_rvcc.repository;
+package cv.dge.dge_api_rvcc.persistence.repository;
 
-import cv.dge.dge_api_rvcc.entity.QualificacaoProfissional;
+import cv.dge.dge_api_rvcc.persistence.entity.QualificacaoProfissional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
