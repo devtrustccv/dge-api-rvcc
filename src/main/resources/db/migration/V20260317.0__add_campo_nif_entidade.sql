@@ -1,0 +1,2 @@
+ALTER TABLE rvcc_t_entidade
+    ADD COLUMN IF NOT EXISTS nif VARCHAR(20);
