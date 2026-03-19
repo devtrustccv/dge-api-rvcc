@@ -97,7 +97,11 @@ public class EntidadeImportacaoService {
                 ));
 
         for (QualificacaoComEstado item : qualificacoesDesejadas.values()) {
-            QualificacaoProfissional qualificacao = obterOuCriarQualificacao(item.qualificacao(), qualificacaoCache);
+            QualificacaoProfissional qualificacao = obterOuCriarQualificacao(
+                    item.qualificacao(),
+                    qualificacaoCache,
+                    item.qualificacaoAtiva()
+            );
             EntidadeQualificacao relacao = relacoesPorCodigo.remove(qualificacao.getCodigoCnq());
 
             if (relacao == null) {
@@ -127,7 +131,8 @@ public class EntidadeImportacaoService {
 
     private QualificacaoProfissional obterOuCriarQualificacao(
             QualificacaoImportacaoRequest payload,
-            Map<String, QualificacaoProfissional> qualificacaoCache
+            Map<String, QualificacaoProfissional> qualificacaoCache,
+            boolean qualificacaoAtiva
     ) {
         String codigoCnq = normalizar(payload.codigoCnq());
         QualificacaoProfissional qualificacao = qualificacaoCache.get(codigoCnq);
@@ -139,13 +144,13 @@ public class EntidadeImportacaoService {
         if (qualificacao == null) {
             qualificacao = new QualificacaoProfissional();
             qualificacao.setCodigoCnq(codigoCnq);
-            qualificacao.setAtivo(Boolean.TRUE);
         }
 
         qualificacao.setSelfidQp(normalizar(payload.selfidQp()));
         qualificacao.setDenominacao(normalizar(payload.denominacao()));
         qualificacao.setFamiliaProfissional(normalizar(payload.familiaProfissional()));
         qualificacao.setNivelQnq(payload.nivelQnq());
+        qualificacao.setAtivo(qualificacaoAtiva);
 
         qualificacao = qualificacaoRepository.save(qualificacao);
         qualificacaoCache.put(codigoCnq, qualificacao);
@@ -168,7 +173,10 @@ public class EntidadeImportacaoService {
         for (QualificacaoImportacaoRequest item : safeList(itens)) {
             validarQualificacao(item, nif);
             String codigoCnq = normalizar(item.codigoCnq());
-            QualificacaoComEstado anterior = qualificacoes.putIfAbsent(codigoCnq, new QualificacaoComEstado(item, estadoAcreditacao));
+            QualificacaoComEstado anterior = qualificacoes.putIfAbsent(
+                    codigoCnq,
+                    new QualificacaoComEstado(item, estadoAcreditacao, ESTADO_ATIVO.equals(estadoAcreditacao))
+            );
 
             if (anterior != null) {
                 throw new ImportacaoInvalidaException(
@@ -234,6 +242,10 @@ public class EntidadeImportacaoService {
         return value.trim();
     }
 
-    private record QualificacaoComEstado(QualificacaoImportacaoRequest qualificacao, String estadoAcreditacao) {
+    private record QualificacaoComEstado(
+            QualificacaoImportacaoRequest qualificacao,
+            String estadoAcreditacao,
+            boolean qualificacaoAtiva
+    ) {
     }
 }
