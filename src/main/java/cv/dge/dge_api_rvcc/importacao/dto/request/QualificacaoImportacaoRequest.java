@@ -9,6 +9,8 @@ public record QualificacaoImportacaoRequest(
         String codigoCnq,
         @JsonProperty("selfid_qp")
         String selfidQp,
+        @JsonProperty("id_formacao")
+        String idFormacao,
         String denominacao,
         @JsonProperty("familia")
         String familiaProfissional,
