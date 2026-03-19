@@ -3,36 +3,8 @@
 -- CRIAÇÃO COMPLETA DO ZERO
 -- =====================================================
 
--- =====================================================
--- LIMPEZA INICIAL
--- =====================================================
 
-DROP TABLE IF EXISTS public.rvcc_t_auditoria CASCADE;
-DROP TABLE IF EXISTS public.rvcc_t_notificacao CASCADE;
-DROP TABLE IF EXISTS public.rvcc_t_documento CASCADE;
-DROP TABLE IF EXISTS public.rvcc_t_encaminhamento CASCADE;
-DROP TABLE IF EXISTS public.rvcc_t_unidade_competencia_avaliada CASCADE;
-DROP TABLE IF EXISTS public.rvcc_t_atividade_avaliada CASCADE;
-DROP TABLE IF EXISTS public.rvcc_t_avaliacao CASCADE;
-DROP TABLE IF EXISTS public.rvcc_t_formacao_profissional CASCADE;
-DROP TABLE IF EXISTS public.rvcc_t_experiencia_profissional CASCADE;
-DROP TABLE IF EXISTS public.rvcc_t_ficha_percurso_profissional CASCADE;
-DROP TABLE IF EXISTS public.rvcc_t_agendamento_io CASCADE;
-DROP TABLE IF EXISTS public.rvcc_t_processo_rvcc CASCADE;
-DROP TABLE IF EXISTS public.rvcc_t_candidato CASCADE;
-DROP TABLE IF EXISTS public.rvcc_t_entidade_qualificacao CASCADE;
-DROP TABLE IF EXISTS public.rvcc_t_atividade_unidade_competencia CASCADE;
-DROP TABLE IF EXISTS public.rvcc_t_unidade_competencia CASCADE;
-DROP TABLE IF EXISTS public.rvcc_t_qualificacao_profissional CASCADE;
-DROP TABLE IF EXISTS public.rvcc_t_entidade_tipo CASCADE;
-DROP TABLE IF EXISTS public.rvcc_t_tipo_entidade CASCADE;
-DROP TABLE IF EXISTS public.rvcc_t_entidade CASCADE;
-
--- =====================================================
--- 1. ESTRUTURA INSTITUCIONAL
--- =====================================================
-
-CREATE TABLE public.rvcc_t_entidade (
+CREATE  TABLE IF NOT EXISTS public.rvcc_t_entidade  (
                                         id_entidade SERIAL PRIMARY KEY,
                                         designacao_comercial VARCHAR(255),
                                         ilha VARCHAR(100),
@@ -44,13 +16,13 @@ CREATE TABLE public.rvcc_t_entidade (
                                         ativo BOOLEAN DEFAULT TRUE
 );
 
-CREATE TABLE public.rvcc_t_tipo_entidade (
+CREATE TABLE IF NOT EXISTS public.rvcc_t_tipo_entidade  (
                                              id_tipo_entidade SERIAL PRIMARY KEY,
                                              codigo VARCHAR(20) UNIQUE NOT NULL,
                                              descricao VARCHAR(150)
 );
 
-CREATE TABLE public.rvcc_t_entidade_tipo (
+CREATE TABLE IF NOT EXISTS public.rvcc_t_entidade_tipo (
                                              id_entidade INT NOT NULL,
                                              id_tipo_entidade INT NOT NULL,
                                              CONSTRAINT rvcc_t_entidade_tipo_pkey PRIMARY KEY (id_entidade, id_tipo_entidade),
@@ -70,7 +42,7 @@ CREATE TABLE public.rvcc_t_entidade_tipo (
 -- 2. CNQ / PAEF
 -- =====================================================
 
-CREATE TABLE public.rvcc_t_qualificacao_profissional (
+CREATE TABLE IF NOT EXISTS public.rvcc_t_qualificacao_profissional (
                                                          id_qualificacao SERIAL PRIMARY KEY,
                                                          codigo_cnq VARCHAR(50) UNIQUE,
                                                          selfid_qp VARCHAR(50),
@@ -80,7 +52,7 @@ CREATE TABLE public.rvcc_t_qualificacao_profissional (
                                                          ativo BOOLEAN DEFAULT TRUE
 );
 
-CREATE TABLE public.rvcc_t_unidade_competencia (
+CREATE TABLE IF NOT EXISTS public.rvcc_t_unidade_competencia (
                                                    id_uc SERIAL PRIMARY KEY,
                                                    id_qualificacao INT,
                                                    codigo_uc VARCHAR(50),
@@ -95,7 +67,7 @@ CREATE TABLE public.rvcc_t_unidade_competencia (
                                                            ON DELETE CASCADE
 );
 
-CREATE TABLE public.rvcc_t_atividade_unidade_competencia (
+CREATE TABLE IF NOT EXISTS public.rvcc_t_atividade_unidade_competencia (
                                                              id_atividade SERIAL PRIMARY KEY,
                                                              id_uc INT,
                                                              codigo_atividade VARCHAR(50),
@@ -109,7 +81,7 @@ CREATE TABLE public.rvcc_t_atividade_unidade_competencia (
                                                                      ON DELETE CASCADE
 );
 
-CREATE TABLE public.rvcc_t_entidade_qualificacao (
+CREATE TABLE IF NOT EXISTS public.rvcc_t_entidade_qualificacao (
                                                      id_entidade INT NOT NULL,
                                                      id_qualificacao INT NOT NULL,
                                                      data_acreditacao DATE,
@@ -131,7 +103,7 @@ CREATE TABLE public.rvcc_t_entidade_qualificacao (
 -- 3. CANDIDATO
 -- =====================================================
 
-CREATE TABLE public.rvcc_t_candidato (
+CREATE TABLE IF NOT EXISTS public.rvcc_t_candidato (
                                          id_candidato SERIAL PRIMARY KEY,
                                          nome_completo VARCHAR(255),
                                          data_nascimento DATE,
@@ -163,7 +135,7 @@ CREATE TABLE public.rvcc_t_candidato (
 -- 4. PROCESSO RVCC
 -- =====================================================
 
-CREATE TABLE public.rvcc_t_processo_rvcc (
+CREATE TABLE IF NOT EXISTS public.rvcc_t_processo_rvcc (
                                              id_processo SERIAL PRIMARY KEY,
                                              id_candidato INT,
                                              num_processo VARCHAR(50),
@@ -185,7 +157,7 @@ CREATE TABLE public.rvcc_t_processo_rvcc (
 -- 5. INFORMAÇÃO E ORIENTAÇÃO (IO)
 -- =====================================================
 
-CREATE TABLE public.rvcc_t_agendamento_io (
+CREATE TABLE IF NOT EXISTS public.rvcc_t_agendamento_io (
                                               id_agendamento SERIAL PRIMARY KEY,
                                               id_processo INT,
                                               id_entidade_cefp INT,
@@ -216,7 +188,7 @@ CREATE TABLE public.rvcc_t_agendamento_io (
 -- 6. FICHA DE PERCURSO
 -- =====================================================
 
-CREATE TABLE public.rvcc_t_ficha_percurso_profissional (
+CREATE TABLE IF NOT EXISTS public.rvcc_t_ficha_percurso_profissional (
                                                            id_ficha SERIAL PRIMARY KEY,
                                                            id_processo INT,
                                                            id_qualificacao INT,
@@ -238,7 +210,7 @@ CREATE TABLE public.rvcc_t_ficha_percurso_profissional (
                                                                    ON DELETE SET NULL
 );
 
-CREATE TABLE public.rvcc_t_experiencia_profissional (
+CREATE TABLE IF NOT EXISTS public.rvcc_t_experiencia_profissional (
                                                         id_experiencia SERIAL PRIMARY KEY,
                                                         id_ficha INT,
                                                         nome_empresa VARCHAR(255),
@@ -255,7 +227,7 @@ CREATE TABLE public.rvcc_t_experiencia_profissional (
                                                                 ON DELETE CASCADE
 );
 
-CREATE TABLE public.rvcc_t_formacao_profissional (
+CREATE TABLE IF NOT EXISTS public.rvcc_t_formacao_profissional (
                                                      id_formacao SERIAL PRIMARY KEY,
                                                      id_ficha INT,
                                                      designacao_acao VARCHAR(255),
@@ -274,7 +246,7 @@ CREATE TABLE public.rvcc_t_formacao_profissional (
 -- 7. AVALIAÇÃO RVCC
 -- =====================================================
 
-CREATE TABLE public.rvcc_t_avaliacao (
+CREATE TABLE IF NOT EXISTS public.rvcc_t_avaliacao (
                                          id_avaliacao SERIAL PRIMARY KEY,
                                          id_processo INT,
                                          id_entidade_juri INT,
@@ -294,7 +266,7 @@ CREATE TABLE public.rvcc_t_avaliacao (
                                                  ON DELETE SET NULL
 );
 
-CREATE TABLE public.rvcc_t_atividade_avaliada (
+CREATE TABLE IF NOT EXISTS public.rvcc_t_atividade_avaliada (
                                                   id_atividade_avaliada SERIAL PRIMARY KEY,
                                                   id_avaliacao INT,
                                                   id_atividade INT,
@@ -315,7 +287,7 @@ CREATE TABLE public.rvcc_t_atividade_avaliada (
                                                           ON DELETE CASCADE
 );
 
-CREATE TABLE public.rvcc_t_unidade_competencia_avaliada (
+CREATE TABLE IF NOT EXISTS public.rvcc_t_unidade_competencia_avaliada (
                                                             id_uc_avaliada SERIAL PRIMARY KEY,
                                                             id_avaliacao INT,
                                                             id_uc INT,
@@ -337,7 +309,7 @@ CREATE TABLE public.rvcc_t_unidade_competencia_avaliada (
 -- 8. ENCAMINHAMENTO (PIE)
 -- =====================================================
 
-CREATE TABLE public.rvcc_t_encaminhamento (
+CREATE TABLE IF NOT EXISTS public.rvcc_t_encaminhamento (
                                               id_encaminhamento SERIAL PRIMARY KEY,
                                               id_processo INT,
                                               id_entidade_certificadora INT,
@@ -371,7 +343,7 @@ CREATE TABLE public.rvcc_t_encaminhamento (
 -- 9. DOCUMENTOS
 -- =====================================================
 
-CREATE TABLE public.rvcc_t_documento (
+CREATE TABLE IF NOT EXISTS public.rvcc_t_documento (
                                          id_documento SERIAL PRIMARY KEY,
                                          id_ficha INT,
                                          tipo_comprovativo VARCHAR(100),
@@ -398,7 +370,7 @@ CREATE TABLE public.rvcc_t_documento (
 -- 10. NOTIFICAÇÕES
 -- =====================================================
 
-CREATE TABLE public.rvcc_t_notificacao (
+CREATE TABLE IF NOT EXISTS public.rvcc_t_notificacao (
                                            id_notificacao SERIAL PRIMARY KEY,
                                            id_processo INT,
                                            tipo VARCHAR(30),
@@ -417,7 +389,7 @@ CREATE TABLE public.rvcc_t_notificacao (
 -- 11. AUDITORIA
 -- =====================================================
 
-CREATE TABLE public.rvcc_t_auditoria (
+CREATE TABLE IF NOT EXISTS public.rvcc_t_auditoria (
                                          id_auditoria SERIAL PRIMARY KEY,
                                          entidade_afetada VARCHAR(100),
                                          id_registo INT,
