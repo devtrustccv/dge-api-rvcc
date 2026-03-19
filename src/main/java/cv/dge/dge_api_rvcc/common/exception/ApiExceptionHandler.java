@@ -28,6 +28,14 @@ public class ApiExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, "JSON invalido ou mal formatado.", request.getRequestURI());
     }
 
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiErrorResponse> handleErroGenerico(
+            Exception exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Ocorreu um erro interno.", request.getRequestURI());
+    }
+
     private ResponseEntity<ApiErrorResponse> buildResponse(HttpStatus status, String message, String path) {
         return ResponseEntity.status(status).body(new ApiErrorResponse(
                 OffsetDateTime.now(),

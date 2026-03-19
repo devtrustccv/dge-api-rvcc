@@ -1,23 +1,16 @@
 package cv.dge.dge_api_rvcc.importacao.service;
 
+import cv.dge.dge_api_rvcc.common.exception.ImportacaoInvalidaException;
 import cv.dge.dge_api_rvcc.importacao.dto.request.EntidadeImportacaoItemRequest;
-import cv.dge.dge_api_rvcc.importacao.dto.response.EntidadeImportacaoResultadoResponse;
 import cv.dge.dge_api_rvcc.importacao.dto.request.ImportacaoEntidadesRequest;
-import cv.dge.dge_api_rvcc.importacao.dto.response.ImportacaoEntidadesResponse;
 import cv.dge.dge_api_rvcc.importacao.dto.request.QualificacaoImportacaoRequest;
 import cv.dge.dge_api_rvcc.persistence.entity.Entidade;
 import cv.dge.dge_api_rvcc.persistence.entity.EntidadeQualificacao;
 import cv.dge.dge_api_rvcc.persistence.entity.EntidadeQualificacaoId;
 import cv.dge.dge_api_rvcc.persistence.entity.QualificacaoProfissional;
-import cv.dge.dge_api_rvcc.common.exception.ImportacaoInvalidaException;
 import cv.dge.dge_api_rvcc.persistence.repository.EntidadeQualificacaoRepository;
 import cv.dge.dge_api_rvcc.persistence.repository.EntidadeRepository;
 import cv.dge.dge_api_rvcc.persistence.repository.QualificacaoProfissionalRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -29,6 +22,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -42,53 +39,35 @@ public class EntidadeImportacaoService {
     private final EntidadeQualificacaoRepository entidadeQualificacaoRepository;
 
     @Transactional
-    public ImportacaoEntidadesResponse importar(ImportacaoEntidadesRequest request) {
+    public ImportacaoEntidadesRequest importar(ImportacaoEntidadesRequest request) {
         if (request == null || request.data() == null || request.data().isEmpty()) {
             throw new ImportacaoInvalidaException("O payload deve conter pelo menos uma entidade em 'data'.");
         }
 
         validarNifsDuplicados(request.data());
 
-        ImportacaoResumo resumo = new ImportacaoResumo(request.data().size());
         Map<String, QualificacaoProfissional> qualificacaoCache = new HashMap<>();
 
         for (EntidadeImportacaoItemRequest item : request.data()) {
             validarEntidade(item);
-            processarEntidade(item, resumo, qualificacaoCache);
+            processarEntidade(item, qualificacaoCache);
         }
 
-        return resumo.toResponse();
+        return request;
     }
 
     private void processarEntidade(
             EntidadeImportacaoItemRequest item,
-            ImportacaoResumo resumo,
             Map<String, QualificacaoProfissional> qualificacaoCache
     ) {
         Map<String, QualificacaoComEstado> qualificacoesDesejadas = construirMapaQualificacoes(item);
         Optional<Entidade> entidadeExistente = entidadeRepository.findByNif(normalizar(item.nif()));
         Entidade entidade = entidadeExistente.orElseGet(Entidade::new);
-        boolean entidadeCriada = entidadeExistente.isEmpty();
 
         aplicarDadosEntidade(entidade, item);
         entidade = entidadeRepository.save(entidade);
 
-        if (entidadeCriada) {
-            resumo.entidadesCriadas++;
-        } else {
-            resumo.entidadesAtualizadas++;
-        }
-
-        RelacaoResumo relacaoResumo = sincronizarQualificacoes(entidade, qualificacoesDesejadas, resumo, qualificacaoCache);
-
-        resumo.resultados.add(new EntidadeImportacaoResultadoResponse(
-                entidade.getIdEntidade(),
-                entidade.getNif(),
-                entidadeCriada,
-                relacaoResumo.relacoesCriadas(),
-                relacaoResumo.relacoesAtualizadas(),
-                relacaoResumo.relacoesRemovidas()
-        ));
+        sincronizarQualificacoes(entidade, qualificacoesDesejadas, qualificacaoCache);
     }
 
     private void aplicarDadosEntidade(Entidade entidade, EntidadeImportacaoItemRequest item) {
@@ -105,10 +84,9 @@ public class EntidadeImportacaoService {
         }
     }
 
-    private RelacaoResumo sincronizarQualificacoes(
+    private void sincronizarQualificacoes(
             Entidade entidade,
             Map<String, QualificacaoComEstado> qualificacoesDesejadas,
-            ImportacaoResumo resumo,
             Map<String, QualificacaoProfissional> qualificacaoCache
     ) {
         List<EntidadeQualificacao> relacoesExistentes = entidadeQualificacaoRepository.findAllByEntidade_IdEntidade(entidade.getIdEntidade());
@@ -118,11 +96,8 @@ public class EntidadeImportacaoService {
                         relacao -> relacao
                 ));
 
-        int relacoesCriadas = 0;
-        int relacoesAtualizadas = 0;
-
         for (QualificacaoComEstado item : qualificacoesDesejadas.values()) {
-            QualificacaoProfissional qualificacao = obterOuCriarQualificacao(item.qualificacao(), qualificacaoCache, resumo);
+            QualificacaoProfissional qualificacao = obterOuCriarQualificacao(item.qualificacao(), qualificacaoCache);
             EntidadeQualificacao relacao = relacoesPorCodigo.remove(qualificacao.getCodigoCnq());
 
             if (relacao == null) {
@@ -132,7 +107,6 @@ public class EntidadeImportacaoService {
                 relacao.setQualificacao(qualificacao);
                 relacao.setEstadoAcreditacao(item.estadoAcreditacao());
                 entidadeQualificacaoRepository.save(relacao);
-                relacoesCriadas++;
                 continue;
             }
 
@@ -142,7 +116,6 @@ public class EntidadeImportacaoService {
 
             if (alterouEstado) {
                 entidadeQualificacaoRepository.save(relacao);
-                relacoesAtualizadas++;
             }
         }
 
@@ -150,18 +123,11 @@ public class EntidadeImportacaoService {
         if (!relacoesParaRemover.isEmpty()) {
             entidadeQualificacaoRepository.deleteAll(relacoesParaRemover);
         }
-
-        resumo.relacoesCriadas += relacoesCriadas;
-        resumo.relacoesAtualizadas += relacoesAtualizadas;
-        resumo.relacoesRemovidas += relacoesParaRemover.size();
-
-        return new RelacaoResumo(relacoesCriadas, relacoesAtualizadas, relacoesParaRemover.size());
     }
 
     private QualificacaoProfissional obterOuCriarQualificacao(
             QualificacaoImportacaoRequest payload,
-            Map<String, QualificacaoProfissional> qualificacaoCache,
-            ImportacaoResumo resumo
+            Map<String, QualificacaoProfissional> qualificacaoCache
     ) {
         String codigoCnq = normalizar(payload.codigoCnq());
         QualificacaoProfissional qualificacao = qualificacaoCache.get(codigoCnq);
@@ -174,7 +140,6 @@ public class EntidadeImportacaoService {
             qualificacao = new QualificacaoProfissional();
             qualificacao.setCodigoCnq(codigoCnq);
             qualificacao.setAtivo(Boolean.TRUE);
-            resumo.qualificacoesCriadas++;
         }
 
         qualificacao.setSelfidQp(normalizar(payload.selfidQp()));
@@ -270,36 +235,5 @@ public class EntidadeImportacaoService {
     }
 
     private record QualificacaoComEstado(QualificacaoImportacaoRequest qualificacao, String estadoAcreditacao) {
-    }
-
-    private record RelacaoResumo(int relacoesCriadas, int relacoesAtualizadas, int relacoesRemovidas) {
-    }
-
-    private static class ImportacaoResumo {
-        private final int totalRecebido;
-        private final List<EntidadeImportacaoResultadoResponse> resultados = new ArrayList<>();
-        private int entidadesCriadas;
-        private int entidadesAtualizadas;
-        private int qualificacoesCriadas;
-        private int relacoesCriadas;
-        private int relacoesAtualizadas;
-        private int relacoesRemovidas;
-
-        private ImportacaoResumo(int totalRecebido) {
-            this.totalRecebido = totalRecebido;
-        }
-
-        private ImportacaoEntidadesResponse toResponse() {
-            return new ImportacaoEntidadesResponse(
-                    totalRecebido,
-                    entidadesCriadas,
-                    entidadesAtualizadas,
-                    qualificacoesCriadas,
-                    relacoesCriadas,
-                    relacoesAtualizadas,
-                    relacoesRemovidas,
-                    List.copyOf(resultados)
-            );
-        }
     }
 }
