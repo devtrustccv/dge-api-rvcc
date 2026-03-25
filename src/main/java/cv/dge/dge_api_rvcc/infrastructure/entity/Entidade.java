@@ -46,4 +46,7 @@ public class Entidade {
 
     @Column(name = "nif")
     private String nif;
+
+    @Column(name = "id_organica")
+    private String idOrganica;
 }

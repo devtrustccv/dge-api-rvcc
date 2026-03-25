@@ -20,6 +20,14 @@ public class ApiExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), request.getRequestURI());
     }
 
+    @ExceptionHandler(IntegracaoOrganizacaoException.class)
+    public ResponseEntity<ApiErrorResponse> handleIntegracaoOrganizacao(
+            IntegracaoOrganizacaoException exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(HttpStatus.BAD_GATEWAY, exception.getMessage(), request.getRequestURI());
+    }
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiErrorResponse> handleJsonInvalido(
             HttpMessageNotReadableException exception,

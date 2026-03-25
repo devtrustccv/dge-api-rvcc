@@ -4,6 +4,7 @@ import cv.dge.dge_api_rvcc.common.exception.ImportacaoInvalidaException;
 import cv.dge.dge_api_rvcc.importacao.dto.request.EntidadeImportacaoItemRequest;
 import cv.dge.dge_api_rvcc.importacao.dto.request.ImportacaoEntidadesRequest;
 import cv.dge.dge_api_rvcc.importacao.dto.request.QualificacaoImportacaoRequest;
+import cv.dge.dge_api_rvcc.infrastructure.client.OrganizacaoApiClient;
 import cv.dge.dge_api_rvcc.persistence.entity.Entidade;
 import cv.dge.dge_api_rvcc.persistence.entity.EntidadeQualificacao;
 import cv.dge.dge_api_rvcc.persistence.entity.EntidadeQualificacaoId;
@@ -37,6 +38,7 @@ public class EntidadeImportacaoService {
     private final EntidadeRepository entidadeRepository;
     private final QualificacaoProfissionalRepository qualificacaoRepository;
     private final EntidadeQualificacaoRepository entidadeQualificacaoRepository;
+    private final OrganizacaoApiClient organizacaoApiClient;
 
     @Transactional
     public ImportacaoEntidadesRequest importar(ImportacaoEntidadesRequest request) {
@@ -63,14 +65,15 @@ public class EntidadeImportacaoService {
         Map<String, QualificacaoComEstado> qualificacoesDesejadas = construirMapaQualificacoes(item);
         Optional<Entidade> entidadeExistente = entidadeRepository.findByNif(normalizar(item.nif()));
         Entidade entidade = entidadeExistente.orElseGet(Entidade::new);
+        String idOrganica = organizacaoApiClient.criarOrganizacao(item.designacaoComercial());
 
-        aplicarDadosEntidade(entidade, item);
+        aplicarDadosEntidade(entidade, item, idOrganica);
         entidade = entidadeRepository.save(entidade);
 
         sincronizarQualificacoes(entidade, qualificacoesDesejadas, qualificacaoCache);
     }
 
-    private void aplicarDadosEntidade(Entidade entidade, EntidadeImportacaoItemRequest item) {
+    private void aplicarDadosEntidade(Entidade entidade, EntidadeImportacaoItemRequest item, String idOrganica) {
         entidade.setNif(normalizar(item.nif()));
         entidade.setDesignacaoComercial(normalizar(item.designacaoComercial()));
         entidade.setIlha(normalizar(item.ilha()));
@@ -79,6 +82,7 @@ public class EntidadeImportacaoService {
         entidade.setEndereco(normalizar(item.endereco()));
         entidade.setNumAlvara(normalizar(item.numAlvara()));
         entidade.setEstadoAlvara(normalizar(item.estadoAlvara()));
+        entidade.setIdOrganica(normalizar(idOrganica));
         if (entidade.getAtivo() == null) {
             entidade.setAtivo(Boolean.TRUE);
         }
