@@ -44,6 +44,7 @@ public record PedidoRvccRequest(
         @JsonProperty("disponibilidade_horario")
         @JsonAlias("disponibilidade")
         String disponibilidadeHorario,
+        @JsonProperty("idade")
         Integer idade,
         @JsonProperty("id_pessoa")
         Integer idPessoa

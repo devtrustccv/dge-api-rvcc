@@ -3,6 +3,8 @@ package cv.dge.dge_api_rvcc.common.exception;
 import cv.dge.dge_api_rvcc.common.api.ApiErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.OffsetDateTime;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
+@Order(Ordered.LOWEST_PRECEDENCE)
 public class ApiExceptionHandler {
 
     @ExceptionHandler(ImportacaoInvalidaException.class)

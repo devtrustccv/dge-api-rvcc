@@ -98,9 +98,7 @@ public class PedidoRvccService {
         validarDatas(dados.dataEmissao(), dados.dataValidade(), dados.dataNascimento());
 
         Integer idadeCalculada = calcularIdade(dados.dataNascimento());
-        if (idadeCalculada < 25) {
-            throw new PedidoRvccInvalidoException(MENSAGEM_IDADE_INVALIDA);
-        }
+        validarIdade(idadeCalculada);
 
         Candidato candidato = new Candidato();
         preencherCandidato(candidato, dados, idadeCalculada, utilizadorRegisto, agora);
@@ -197,6 +195,16 @@ public class PedidoRvccService {
             throw new PedidoRvccInvalidoException(
                     "O campo \"Telemóvel\" deve aceitar apenas valores numéricos inteiros com exatamente 7 caracteres."
             );
+        }
+    }
+
+    private void validarIdade(Integer idade) {
+        if (idade == null) {
+            throw new PedidoRvccInvalidoException(MENSAGEM_DATA_NASCIMENTO_INVALIDA);
+        }
+
+        if (idade < 25) {
+            throw new PedidoRvccInvalidoException(MENSAGEM_IDADE_INVALIDA);
         }
     }
 
