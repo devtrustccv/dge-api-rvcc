@@ -75,8 +75,22 @@ public class PedidoRvccService {
             String numeroDocumento = normalizar(request.numeroDocumento());
 
             Optional<Candidato> candidatoExistente = candidatoRepository.findByNumeroDocumento(numeroDocumento);
-            Candidato candidato = candidatoExistente.orElseGet(() -> criarCandidato(request, utilizadorRegisto, agora));
-            Entidade entidade = candidatoExistente.isPresent() ? null : obterEntidadeObrigatoria(request.idEntidade());
+            Candidato candidato;
+            if (candidatoExistente.isPresent()) {
+                // Atualizar os dados do candidato existente com os dados enviados da tela
+                candidato = candidatoExistente.get();
+                DadosCandidato dados = consolidarDados(request);
+                validarCamposFinais(dados);
+                validarTelemovel(dados.telemovel());
+                validarDatas(dados.dataEmissao(), dados.dataValidade(), dados.dataNascimento());
+                Integer idadeCalculada = calcularIdade(dados.dataNascimento());
+                validarIdade(idadeCalculada);
+                preencherCandidato(candidato, dados, idadeCalculada, utilizadorRegisto, agora);
+                candidato = candidatoRepository.save(candidato);
+            } else {
+                candidato = criarCandidato(request, utilizadorRegisto, agora);
+            }
+            Entidade entidade = obterEntidadeObrigatoria(request.idEntidade());
 
             ProcessoRvcc processo = new ProcessoRvcc();
             processo.setIdCandidato(candidato);
