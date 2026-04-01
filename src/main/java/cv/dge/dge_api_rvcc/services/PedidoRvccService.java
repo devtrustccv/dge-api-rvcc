@@ -284,14 +284,13 @@ public class PedidoRvccService {
             LocalDateTime agora
     ) {
         Map<String, String> detalhes = new LinkedHashMap<>();
-        detalhes.put("id_processo", String.valueOf(processo.getIdProcesso()));
-        detalhes.put("numero_processo", processo.getNumProcesso());
-        detalhes.put("numero_documento", candidato.getNumeroDocumento());
-        detalhes.put("nome_candidato", candidato.getNomeCompleto());
-        detalhes.put("estado_processo", processo.getEstado());
+        detalhes.put("Numero Processp", processo.getNumProcesso());
+        detalhes.put("Numero Documento", candidato.getNumeroDocumento());
+        detalhes.put("Nome Candidato", candidato.getNomeCompleto());
+        detalhes.put("Estado Processo", processo.getEstado());
 
         if (entidade != null && StringUtils.hasText(entidade.getDesignacaoComercial())) {
-            detalhes.put("entidade", entidade.getDesignacaoComercial());
+            detalhes.put("Entidade", entidade.getDesignacaoComercial());
         }
 
         List<AcompanhamentoDTO.Evento> eventos = new ArrayList<>();
