@@ -1,5 +1,7 @@
 package cv.dge.dge_api_rvcc.services;
 
+import cv.dge.dge_api_rvcc.aplication.acompanhamento.dto.AcompanhamentoDTO;
+import cv.dge.dge_api_rvcc.aplication.acompanhamento.service.AcompanhamentoService;
 import cv.dge.dge_api_rvcc.dtos.PedidoRvccRequest;
 import cv.dge.dge_api_rvcc.dtos.PedidoRvccResponse;
 import cv.dge.dge_api_rvcc.exceptions.PedidoRvccInvalidoException;
@@ -15,6 +17,10 @@ import cv.dge.dge_api_rvcc.repositories.ProcessoRvccRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +51,7 @@ public class PedidoRvccService {
     private final ProcessoRvccRepository processoRvccRepository;
     private final AgendamentoIoRepository agendamentoIoRepository;
     private final EntidadeRepository entidadeRepository;
+    private final AcompanhamentoService acompanhamentoService;
 
     @Transactional
     public PedidoRvccResponse criarPedido(PedidoRvccRequest request) {
@@ -80,6 +87,10 @@ public class PedidoRvccService {
         agendamentoIo.setDatareg(agora);
         agendamentoIo.setTipoAgendamento(TIPO_AGENDAMENTO_VALIDACAO);
         agendamentoIo = agendamentoIoRepository.save(agendamentoIo);
+
+        acompanhamentoService.criarAcompanhamento(
+                montarAcompanhamento(candidato, processo, entidade, agora)
+        );
 
         return PedidoRvccMapper.toResponse(candidato, processo, agendamentoIo);
     }
@@ -264,6 +275,55 @@ public class PedidoRvccService {
             return null;
         }
         return value.trim();
+    }
+
+    private AcompanhamentoDTO montarAcompanhamento(
+            Candidato candidato,
+            ProcessoRvcc processo,
+            Entidade entidade,
+            LocalDateTime agora
+    ) {
+        Map<String, String> detalhes = new LinkedHashMap<>();
+        detalhes.put("id_processo", String.valueOf(processo.getIdProcesso()));
+        detalhes.put("numero_processo", processo.getNumProcesso());
+        detalhes.put("numero_documento", candidato.getNumeroDocumento());
+        detalhes.put("nome_candidato", candidato.getNomeCompleto());
+        detalhes.put("estado_processo", processo.getEstado());
+
+        if (entidade != null && StringUtils.hasText(entidade.getDesignacaoComercial())) {
+            detalhes.put("entidade", entidade.getDesignacaoComercial());
+        }
+
+        List<AcompanhamentoDTO.Evento> eventos = new ArrayList<>();
+        eventos.add(new AcompanhamentoDTO.Evento(
+                "Pedido RVCC criado",
+                "Pedido submetido e enviado para acompanhamento.",
+                agora,
+                detalhes
+        ));
+
+        return new AcompanhamentoDTO(
+                processo.getNumProcesso(),
+                "certificacao_rvcc",
+                candidato.getIdPessoa(),
+                entidade != null ? entidade.getNif() : null,
+                "CERTIFICAO_RVCC",
+                "Pedido RVCC",
+                10,
+                entidade != null ? entidade.getDesignacaoComercial() : null,
+                "Pedido RVCC submetido com sucesso.",
+                null,
+                processo.getDataSubmissao(),
+                null,
+                "Candidatura",
+                "EM_PROGRESSO",
+                "em_processo",
+                detalhes,
+                List.of(),
+                eventos,
+                List.of(),
+                List.of()
+        );
     }
 
     private record DadosCandidato(
