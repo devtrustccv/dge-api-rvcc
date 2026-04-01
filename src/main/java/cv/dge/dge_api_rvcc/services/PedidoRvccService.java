@@ -41,7 +41,7 @@ public class PedidoRvccService {
     private static final String ESTADO_ATIVO = "A";
     private static final String ESTADO_CANDIDATURA = "Candidatura";
     private static final String TIPO_AGENDAMENTO_VALIDACAO = "VALIDACAO";
-    private static final String UTILIZADOR_SISTEMA = "system";
+    private static final String UTILIZADOR_SISTEMA = "";
     private static final String MENSAGEM_IDADE_INVALIDA =
             "Para solicitar o RVCC, a idade tem de ser maior ou igual a 25 anos";
     private static final String MENSAGEM_DATA_EMISSAO_INVALIDA =
