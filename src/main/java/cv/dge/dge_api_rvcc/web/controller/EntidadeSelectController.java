@@ -1,6 +1,6 @@
-package cv.dge.dge_api_rvcc.controllers;
+package cv.dge.dge_api_rvcc.web.controller;
 
-import cv.dge.dge_api_rvcc.dtos.EntidadeSelectOptionDto;
+import cv.dge.dge_api_rvcc.domain.pedido.dtos.EntidadeSelectOptionDto;
 import cv.dge.dge_api_rvcc.services.EntidadeSelectService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,3 +24,4 @@ public class EntidadeSelectController {
         return entidadeSelectService.listarEntidadesIoParaSelect();
     }
 }
+

@@ -1,4 +1,4 @@
-package cv.dge.dge_api_rvcc.infrastructure.client;
+package cv.dge.dge_api_rvcc.infrastructure.primary.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -161,3 +161,4 @@ public class OrganizacaoApiClient {
         return null;
     }
 }
+

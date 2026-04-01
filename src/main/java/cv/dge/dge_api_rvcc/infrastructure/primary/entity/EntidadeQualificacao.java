@@ -1,4 +1,4 @@
-package cv.dge.dge_api_rvcc.persistence.entity;
+package cv.dge.dge_api_rvcc.infrastructure.primary.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
@@ -38,3 +38,4 @@ public class EntidadeQualificacao {
     @Column(name = "estado_acreditacao")
     private String estadoAcreditacao;
 }
+

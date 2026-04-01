@@ -1,4 +1,4 @@
-package cv.dge.dge_api_rvcc.dtos;
+package cv.dge.dge_api_rvcc.domain.pedido.dtos;
 
 import java.time.LocalDateTime;
 
@@ -11,3 +11,4 @@ public record PedidoRvccResponse(
         String mensagem
 ) {
 }
+

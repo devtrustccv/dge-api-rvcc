@@ -1,7 +1,7 @@
-package cv.dge.dge_api_rvcc.controllers;
+package cv.dge.dge_api_rvcc.web.controller;
 
-import cv.dge.dge_api_rvcc.dtos.PedidoRvccRequest;
-import cv.dge.dge_api_rvcc.dtos.PedidoRvccResponse;
+import cv.dge.dge_api_rvcc.domain.pedido.dtos.PedidoRvccRequest;
+import cv.dge.dge_api_rvcc.domain.pedido.dtos.PedidoRvccResponse;
 import cv.dge.dge_api_rvcc.services.PedidoRvccService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,3 +28,4 @@ public class PedidoRvccController {
         return pedidoRvccService.criarPedido(request);
     }
 }
+

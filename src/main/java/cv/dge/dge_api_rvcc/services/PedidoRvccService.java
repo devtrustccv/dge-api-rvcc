@@ -2,18 +2,21 @@ package cv.dge.dge_api_rvcc.services;
 
 import cv.dge.dge_api_rvcc.aplication.acompanhamento.dto.AcompanhamentoDTO;
 import cv.dge.dge_api_rvcc.aplication.acompanhamento.service.AcompanhamentoService;
-import cv.dge.dge_api_rvcc.dtos.PedidoRvccRequest;
-import cv.dge.dge_api_rvcc.dtos.PedidoRvccResponse;
+import cv.dge.dge_api_rvcc.aplication.notification.dto.NotificationRequestDTO;
+import cv.dge.dge_api_rvcc.aplication.notification.service.NotificationService;
+import cv.dge.dge_api_rvcc.domain.pedido.dtos.PedidoRvccRequest;
+import cv.dge.dge_api_rvcc.domain.pedido.dtos.PedidoRvccResponse;
 import cv.dge.dge_api_rvcc.exceptions.PedidoRvccInvalidoException;
+import cv.dge.dge_api_rvcc.infrastructure.secondary.TNotificacaoConfigEmail;
 import cv.dge.dge_api_rvcc.mappers.PedidoRvccMapper;
-import cv.dge.dge_api_rvcc.models.AgendamentoIo;
-import cv.dge.dge_api_rvcc.models.Candidato;
-import cv.dge.dge_api_rvcc.models.ProcessoRvcc;
-import cv.dge.dge_api_rvcc.persistence.entity.Entidade;
-import cv.dge.dge_api_rvcc.persistence.repository.EntidadeRepository;
-import cv.dge.dge_api_rvcc.repositories.AgendamentoIoRepository;
-import cv.dge.dge_api_rvcc.repositories.CandidatoRepository;
-import cv.dge.dge_api_rvcc.repositories.ProcessoRvccRepository;
+import cv.dge.dge_api_rvcc.infrastructure.primary.entity.AgendamentoIo;
+import cv.dge.dge_api_rvcc.infrastructure.primary.entity.Candidato;
+import cv.dge.dge_api_rvcc.infrastructure.primary.entity.ProcessoRvcc;
+import cv.dge.dge_api_rvcc.infrastructure.primary.entity.Entidade;
+import cv.dge.dge_api_rvcc.infrastructure.primary.repository.EntidadeRepository;
+import cv.dge.dge_api_rvcc.infrastructure.primary.repository.AgendamentoIoRepository;
+import cv.dge.dge_api_rvcc.infrastructure.primary.repository.CandidatoRepository;
+import cv.dge.dge_api_rvcc.infrastructure.primary.repository.ProcessoRvccRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
@@ -24,12 +27,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.util.HtmlUtils;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PedidoRvccService {
 
     private static final String ESTADO_ATIVO = "A";
@@ -39,60 +45,76 @@ public class PedidoRvccService {
     private static final String MENSAGEM_IDADE_INVALIDA =
             "Para solicitar o RVCC, a idade tem de ser maior ou igual a 25 anos";
     private static final String MENSAGEM_DATA_EMISSAO_INVALIDA =
-            "A \"Data emissão\" não deve ser superior a data atual. Verifique, por favor.";
+            "A \"Data emissao\" nao deve ser superior a data atual. Verifique, por favor.";
     private static final String MENSAGEM_DATA_VALIDADE_INVALIDA =
             "A \"Data validade\" deve ser superior a data atual. Verifique, por favor.";
     private static final String MENSAGEM_INTERVALO_DATA_INVALIDO =
-            "A \"Data de emissão\" não deve ser igual ou superior a \"Data validade\". Verifique, por favor.";
+            "A \"Data de emissao\" nao deve ser igual ou superior a \"Data validade\". Verifique, por favor.";
     private static final String MENSAGEM_DATA_NASCIMENTO_INVALIDA =
-            "A \"Data de Nascimento\" não deve ser igual ou maior que a data atual. Verifique, por favor.";
+            "A \"Data de Nascimento\" nao deve ser igual ou maior que a data atual. Verifique, por favor.";
 
     private final CandidatoRepository candidatoRepository;
     private final ProcessoRvccRepository processoRvccRepository;
     private final AgendamentoIoRepository agendamentoIoRepository;
     private final EntidadeRepository entidadeRepository;
     private final AcompanhamentoService acompanhamentoService;
+    private final NotificationService notificationService;
 
     @Transactional
     public PedidoRvccResponse criarPedido(PedidoRvccRequest request) {
-        if (request == null) {
-            throw new PedidoRvccInvalidoException("O payload do pedido de validacao e obrigatorio.");
+        log.info("Iniciando criacao de pedido RVCC: {}", request);
+        try {
+            if (request == null) {
+                throw new PedidoRvccInvalidoException("O payload do pedido de validacao e obrigatorio.");
+            }
+
+            validarObrigatorio(request.numeroDocumento(), "numero_documento");
+
+            String utilizadorRegisto = UTILIZADOR_SISTEMA;
+            LocalDateTime agora = LocalDateTime.now();
+            String numeroDocumento = normalizar(request.numeroDocumento());
+
+            Optional<Candidato> candidatoExistente = candidatoRepository.findByNumeroDocumento(numeroDocumento);
+            Candidato candidato = candidatoExistente.orElseGet(() -> criarCandidato(request, utilizadorRegisto, agora));
+            Entidade entidade = candidatoExistente.isPresent() ? null : obterEntidadeObrigatoria(request.idEntidade());
+
+            ProcessoRvcc processo = new ProcessoRvcc();
+            processo.setIdCandidato(candidato);
+            processo.setNumProcesso(gerarNumeroProcesso());
+            processo.setEstado(ESTADO_CANDIDATURA);
+            processo.setDataSubmissao(agora);
+            processo.setUtilizadorRegisto(utilizadorRegisto);
+            processo.setDatareg(agora);
+            processo.setIdEntidade(entidade);
+            processo = processoRvccRepository.save(processo);
+            log.info("Processo criado: {}", processo.getNumProcesso());
+
+            AgendamentoIo agendamentoIo = new AgendamentoIo();
+            agendamentoIo.setIdProcesso(processo);
+            agendamentoIo.setIdEntidadeCefp(entidade);
+            agendamentoIo.setCriadoEm(agora);
+            agendamentoIo.setUtilizadorRegisto(utilizadorRegisto);
+            agendamentoIo.setDatareg(agora);
+            agendamentoIo.setTipoAgendamento(TIPO_AGENDAMENTO_VALIDACAO);
+            agendamentoIo = agendamentoIoRepository.save(agendamentoIo);
+            log.info("Agendamento criado: {}", agendamentoIo.getIdAgendamento());
+
+            acompanhamentoService.criarAcompanhamento(
+                    montarAcompanhamento(candidato, processo, entidade, agora)
+            );
+
+            enviarEmailRequerente(processo, candidato);
+
+            PedidoRvccResponse response = PedidoRvccMapper.toResponse(candidato, processo, agendamentoIo);
+            log.info("Pedido criado com sucesso: {}", response);
+            return response;
+        } catch (PedidoRvccInvalidoException e) {
+            log.warn("Erro de validacao no pedido: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Erro interno ao criar pedido: ", e);
+            throw e;
         }
-
-        validarObrigatorio(request.numeroDocumento(), "numero_documento");
-
-        String utilizadorRegisto = UTILIZADOR_SISTEMA;
-        LocalDateTime agora = LocalDateTime.now();
-        String numeroDocumento = normalizar(request.numeroDocumento());
-
-        Optional<Candidato> candidatoExistente = candidatoRepository.findByNumeroDocumento(numeroDocumento);
-        Candidato candidato = candidatoExistente.orElseGet(() -> criarCandidato(request, utilizadorRegisto, agora));
-        Entidade entidade = candidatoExistente.isPresent() ? null : obterEntidadeObrigatoria(request.idEntidade());
-
-        ProcessoRvcc processo = new ProcessoRvcc();
-        processo.setIdCandidato(candidato);
-        processo.setNumProcesso(gerarNumeroProcesso());
-        processo.setEstado(ESTADO_CANDIDATURA);
-        processo.setDataSubmissao(agora);
-        processo.setUtilizadorRegisto(utilizadorRegisto);
-        processo.setDatareg(agora);
-        processo.setIdEntidade(entidade);
-        processo = processoRvccRepository.save(processo);
-
-        AgendamentoIo agendamentoIo = new AgendamentoIo();
-        agendamentoIo.setIdProcesso(processo);
-        agendamentoIo.setIdEntidadeCefp(entidade);
-        agendamentoIo.setCriadoEm(agora);
-        agendamentoIo.setUtilizadorRegisto(utilizadorRegisto);
-        agendamentoIo.setDatareg(agora);
-        agendamentoIo.setTipoAgendamento(TIPO_AGENDAMENTO_VALIDACAO);
-        agendamentoIo = agendamentoIoRepository.save(agendamentoIo);
-
-        acompanhamentoService.criarAcompanhamento(
-                montarAcompanhamento(candidato, processo, entidade, agora)
-        );
-
-        return PedidoRvccMapper.toResponse(candidato, processo, agendamentoIo);
     }
 
     private Candidato criarCandidato(
@@ -200,11 +222,10 @@ public class PedidoRvccService {
         validarObrigatorio(dados.disponibilidadeHorario(), "disponibilidade_horario");
     }
 
-
     private void validarTelemovel(String telemovel) {
         if (telemovel == null || !telemovel.matches("\\d{7}")) {
             throw new PedidoRvccInvalidoException(
-                    "O campo \"Telemóvel\" deve aceitar apenas valores numéricos inteiros com exatamente 7 caracteres."
+                    "O campo \"Telemovel\" deve aceitar apenas valores numericos inteiros com exatamente 7 caracteres."
             );
         }
     }
@@ -214,7 +235,7 @@ public class PedidoRvccService {
             throw new PedidoRvccInvalidoException(MENSAGEM_DATA_NASCIMENTO_INVALIDA);
         }
 
-        if (idade < 25) {
+        if (idade <= 25) {
             throw new PedidoRvccInvalidoException(MENSAGEM_IDADE_INVALIDA);
         }
     }
@@ -348,4 +369,42 @@ public class PedidoRvccService {
             Integer idPessoa
     ) {
     }
+
+    public void enviarEmailRequerente(ProcessoRvcc processo, Candidato candidato) {
+        TNotificacaoConfigEmail configEmail = notificationService.loadConfigNotification(
+                "SOLICITACAO_RVCC",
+                null,
+                null,
+                "certificacao_evcc"
+        );
+
+        if (configEmail == null) {
+            throw new IllegalStateException("Configuracao de email com o codigo [SOLICITACAO_RVCC] nao existe.");
+        }
+
+        String emailRequerente = candidato.getEmail();
+        String nomeRequerente = candidato.getNomeCompleto();
+        String nomeEntidade = candidato.getEntidadeEmpregadora();
+        String decoded = configEmail.getMensagem() != null
+                ? HtmlUtils.htmlUnescape(configEmail.getMensagem())
+                : "";
+        String mensagem = decoded
+                .replace("[NOME_COMPLETO]", nomeRequerente)
+                .replace("[NOME_ENTIDADE]", nomeEntidade != null ? nomeEntidade : "")
+                .replace("[NUMERO_PROCESSO]", processo.getNumProcesso());
+
+        NotificationRequestDTO dto = new NotificationRequestDTO();
+        dto.setAppName("certificacao_rvcc");
+        dto.setAssunto(configEmail.getAssunto());
+        dto.setMensagem(mensagem);
+        dto.setIdProcesso(processo.getIdProcesso() != null ? processo.getIdProcesso().toString() : "");
+        dto.setTipoProcesso("pedido_rvcc");
+        dto.setIdRelacao(processo.getNumProcesso());
+        dto.setTipoRelacao("pedido");
+        dto.setEmail(emailRequerente);
+        dto.setIsAlert("NAO");
+
+        notificationService.enviarEmail(dto);
+    }
 }
+

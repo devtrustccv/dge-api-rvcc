@@ -1,4 +1,4 @@
-package cv.dge.dge_api_rvcc.importacao.dto.request;
+package cv.dge.dge_api_rvcc.aplication.integration.Paef.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

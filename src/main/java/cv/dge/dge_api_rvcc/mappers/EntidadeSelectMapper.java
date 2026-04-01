@@ -1,7 +1,7 @@
 package cv.dge.dge_api_rvcc.mappers;
 
-import cv.dge.dge_api_rvcc.dtos.EntidadeSelectOptionDto;
-import cv.dge.dge_api_rvcc.persistence.entity.Entidade;
+import cv.dge.dge_api_rvcc.domain.pedido.dtos.EntidadeSelectOptionDto;
+import cv.dge.dge_api_rvcc.infrastructure.primary.entity.Entidade;
 
 public final class EntidadeSelectMapper {
 
@@ -15,3 +15,4 @@ public final class EntidadeSelectMapper {
         );
     }
 }
+

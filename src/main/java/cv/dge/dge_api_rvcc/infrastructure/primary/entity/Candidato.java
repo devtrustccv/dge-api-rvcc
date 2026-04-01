@@ -1,4 +1,4 @@
-package cv.dge.dge_api_rvcc.models;
+package cv.dge.dge_api_rvcc.infrastructure.primary.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -97,3 +97,4 @@ public class Candidato {
     @Column(name = "id_pessoa")
     private Integer idPessoa;
 }
+

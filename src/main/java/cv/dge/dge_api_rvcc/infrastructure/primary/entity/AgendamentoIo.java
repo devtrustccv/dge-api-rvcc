@@ -1,6 +1,6 @@
-package cv.dge.dge_api_rvcc.models;
+package cv.dge.dge_api_rvcc.infrastructure.primary.entity;
 
-import cv.dge.dge_api_rvcc.persistence.entity.Entidade;
+import cv.dge.dge_api_rvcc.infrastructure.primary.entity.Entidade;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -66,3 +66,4 @@ public class AgendamentoIo {
     @Column(name = "tipo_agendamento")
     private String tipoAgendamento;
 }
+

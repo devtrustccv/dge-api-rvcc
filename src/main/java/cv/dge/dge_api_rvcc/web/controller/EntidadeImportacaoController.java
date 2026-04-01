@@ -1,7 +1,7 @@
-package cv.dge.dge_api_rvcc.importacao.controller;
+package cv.dge.dge_api_rvcc.web.controller;
 
-import cv.dge.dge_api_rvcc.importacao.dto.request.ImportacaoEntidadesRequest;
-import cv.dge.dge_api_rvcc.importacao.service.EntidadeImportacaoService;
+import cv.dge.dge_api_rvcc.aplication.integration.Paef.dto.request.ImportacaoEntidadesRequest;
+import cv.dge.dge_api_rvcc.aplication.integration.Paef.service.EntidadeImportacaoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

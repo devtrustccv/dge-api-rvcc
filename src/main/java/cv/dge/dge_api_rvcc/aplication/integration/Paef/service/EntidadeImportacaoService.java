@@ -1,17 +1,17 @@
-package cv.dge.dge_api_rvcc.importacao.service;
+package cv.dge.dge_api_rvcc.aplication.integration.Paef.service;
 
 import cv.dge.dge_api_rvcc.common.exception.ImportacaoInvalidaException;
-import cv.dge.dge_api_rvcc.importacao.dto.request.EntidadeImportacaoItemRequest;
-import cv.dge.dge_api_rvcc.importacao.dto.request.ImportacaoEntidadesRequest;
-import cv.dge.dge_api_rvcc.importacao.dto.request.QualificacaoImportacaoRequest;
-import cv.dge.dge_api_rvcc.infrastructure.client.OrganizacaoApiClient;
-import cv.dge.dge_api_rvcc.persistence.entity.Entidade;
-import cv.dge.dge_api_rvcc.persistence.entity.EntidadeQualificacao;
-import cv.dge.dge_api_rvcc.persistence.entity.EntidadeQualificacaoId;
-import cv.dge.dge_api_rvcc.persistence.entity.QualificacaoProfissional;
-import cv.dge.dge_api_rvcc.persistence.repository.EntidadeQualificacaoRepository;
-import cv.dge.dge_api_rvcc.persistence.repository.EntidadeRepository;
-import cv.dge.dge_api_rvcc.persistence.repository.QualificacaoProfissionalRepository;
+import cv.dge.dge_api_rvcc.aplication.integration.Paef.dto.request.EntidadeImportacaoItemRequest;
+import cv.dge.dge_api_rvcc.aplication.integration.Paef.dto.request.ImportacaoEntidadesRequest;
+import cv.dge.dge_api_rvcc.aplication.integration.Paef.dto.request.QualificacaoImportacaoRequest;
+import cv.dge.dge_api_rvcc.infrastructure.primary.client.OrganizacaoApiClient;
+import cv.dge.dge_api_rvcc.infrastructure.primary.entity.Entidade;
+import cv.dge.dge_api_rvcc.infrastructure.primary.entity.EntidadeQualificacao;
+import cv.dge.dge_api_rvcc.infrastructure.primary.entity.EntidadeQualificacaoId;
+import cv.dge.dge_api_rvcc.infrastructure.primary.entity.QualificacaoProfissional;
+import cv.dge.dge_api_rvcc.infrastructure.primary.repository.EntidadeQualificacaoRepository;
+import cv.dge.dge_api_rvcc.infrastructure.primary.repository.EntidadeRepository;
+import cv.dge.dge_api_rvcc.infrastructure.primary.repository.QualificacaoProfissionalRepository;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -253,3 +253,4 @@ public class EntidadeImportacaoService {
     ) {
     }
 }
+

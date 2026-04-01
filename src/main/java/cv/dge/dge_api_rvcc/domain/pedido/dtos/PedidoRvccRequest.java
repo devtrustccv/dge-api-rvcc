@@ -1,4 +1,4 @@
-package cv.dge.dge_api_rvcc.dtos;
+package cv.dge.dge_api_rvcc.domain.pedido.dtos;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -50,3 +50,4 @@ public record PedidoRvccRequest(
         Integer idPessoa
 ) {
 }
+

@@ -1,9 +1,9 @@
 package cv.dge.dge_api_rvcc.mappers;
 
-import cv.dge.dge_api_rvcc.dtos.PedidoRvccResponse;
-import cv.dge.dge_api_rvcc.models.AgendamentoIo;
-import cv.dge.dge_api_rvcc.models.Candidato;
-import cv.dge.dge_api_rvcc.models.ProcessoRvcc;
+import cv.dge.dge_api_rvcc.domain.pedido.dtos.PedidoRvccResponse;
+import cv.dge.dge_api_rvcc.infrastructure.primary.entity.AgendamentoIo;
+import cv.dge.dge_api_rvcc.infrastructure.primary.entity.Candidato;
+import cv.dge.dge_api_rvcc.infrastructure.primary.entity.ProcessoRvcc;
 
 public final class PedidoRvccMapper {
 
@@ -25,3 +25,4 @@ public final class PedidoRvccMapper {
         );
     }
 }
+

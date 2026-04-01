@@ -1,8 +1,8 @@
 package cv.dge.dge_api_rvcc.services;
 
-import cv.dge.dge_api_rvcc.dtos.EntidadeSelectOptionDto;
+import cv.dge.dge_api_rvcc.domain.pedido.dtos.EntidadeSelectOptionDto;
 import cv.dge.dge_api_rvcc.mappers.EntidadeSelectMapper;
-import cv.dge.dge_api_rvcc.repositories.TipoEntidadeRepository;
+import cv.dge.dge_api_rvcc.infrastructure.primary.repository.TipoEntidadeRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,3 +21,4 @@ public class EntidadeSelectService {
                 .toList();
     }
 }
+
