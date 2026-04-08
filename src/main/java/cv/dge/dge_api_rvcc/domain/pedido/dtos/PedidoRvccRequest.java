@@ -30,11 +30,16 @@ public record PedidoRvccRequest(
         String ilha,
         String concelho,
         String morada,
+        @JsonProperty("endereco_atual")
+        String enderecoAtual,
         String email,
         @JsonAlias("telefone")
         String telemovel,
         @JsonProperty("situacao_emprego")
         String situacaoEmprego,
+        @JsonProperty("empregado")
+        @JsonAlias("encontra_se_empregado")
+        String empregado,
         @JsonProperty("entidade_empregadora")
         String entidadeEmpregadora,
         String profissao,

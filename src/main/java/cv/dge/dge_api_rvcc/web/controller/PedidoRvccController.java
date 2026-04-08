@@ -22,7 +22,7 @@ public class PedidoRvccController {
     private final PedidoRvccService pedidoRvccService;
 
     @Operation(summary = "Cria um pedido RVCC")
-    @PostMapping("/criar")
+    @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     public PedidoRvccResponse criar(@RequestBody PedidoRvccRequest request) {
         return pedidoRvccService.criarPedido(request);

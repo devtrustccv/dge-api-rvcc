@@ -55,6 +55,9 @@ public class Candidato {
     @Column(name = "morada")
     private String morada;
 
+    @Column(name = "endereco_atual")
+    private String enderecoAtual;
+
     @Column(name = "telefone")
     private String telefone;
 
@@ -63,6 +66,9 @@ public class Candidato {
 
     @Column(name = "situacao_emprego")
     private String situacaoEmprego;
+
+    @Column(name = "empregado")
+    private String empregado;
 
     @Column(name = "entidade_empregadora")
     private String entidadeEmpregadora;

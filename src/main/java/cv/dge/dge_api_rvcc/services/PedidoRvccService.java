@@ -177,9 +177,11 @@ public class PedidoRvccService {
         candidato.setIlha(dados.ilha());
         candidato.setConcelho(dados.concelho());
         candidato.setMorada(dados.morada());
+        candidato.setEnderecoAtual(dados.enderecoAtual());
         candidato.setEmail(dados.email());
         candidato.setTelefone(dados.telemovel());
         candidato.setSituacaoEmprego(dados.situacaoEmprego());
+        candidato.setEmpregado(dados.empregado());
         candidato.setEntidadeEmpregadora(dados.entidadeEmpregadora());
         candidato.setProfissao(dados.profissao());
         candidato.setHabilitacoesLiterarias(dados.habilitacaoLiteraria());
@@ -205,9 +207,11 @@ public class PedidoRvccService {
                 normalizar(request.ilha()),
                 normalizar(request.concelho()),
                 normalizar(request.morada()),
+                normalizar(request.enderecoAtual()),
                 normalizar(request.email()),
                 normalizar(request.telemovel()),
                 normalizar(request.situacaoEmprego()),
+                normalizar(request.empregado()),
                 normalizar(request.entidadeEmpregadora()),
                 normalizar(request.profissao()),
                 normalizar(request.habilitacaoLiteraria()),
@@ -373,9 +377,11 @@ public class PedidoRvccService {
             String ilha,
             String concelho,
             String morada,
+            String enderecoAtual,
             String email,
             String telemovel,
             String situacaoEmprego,
+            String empregado,
             String entidadeEmpregadora,
             String profissao,
             String habilitacaoLiteraria,
@@ -421,4 +427,3 @@ public class PedidoRvccService {
         notificationService.enviarEmail(dto);
     }
 }
-
