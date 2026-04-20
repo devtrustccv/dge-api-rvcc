@@ -15,35 +15,32 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "rvcc_t_unidade_competencia")
-public class UnidadeCompetencia {
+@Table(name = "rvcc_t_atividade_unidade_competencia")
+public class AtividadeUnidadeCompetencia {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_uc")
-    private Integer idUc;
+    @Column(name = "id_atividade")
+    private Integer idAtividade;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_qualificacao")
-    private QualificacaoProfissional idQualificacao;
+    @JoinColumn(name = "id_uc")
+    private UnidadeCompetencia unidadeCompetencia;
 
-    @Column(name = "codigo_uc")
-    private String codigoUc;
-
-    @Column(name = "denominacao")
-    private String denominacao;
+    @Column(name = "codigo_atividade")
+    private String codigoAtividade;
 
     @Column(name = "descricao")
     private String descricao;
 
-    @Column(name = "carga_horaria")
-    private Integer cargaHoraria;
+    @Column(name = "ponderacao")
+    private Integer ponderacao;
 
-    @Column(name = "codigo_modulo_formativo")
-    private String codigoModuloFormativo;
+    @Column(name = "requisitos")
+    private String requisitos;
 
-    @Column(name = "denominacao_mf")
-    private String denominacaoMf;
+    @Column(name = "conhecimentos")
+    private String conhecimentos;
 
     @Column(name = "ativo")
     private Boolean ativo = Boolean.TRUE;

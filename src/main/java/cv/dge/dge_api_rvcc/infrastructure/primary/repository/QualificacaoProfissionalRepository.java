@@ -8,5 +8,7 @@ import java.util.Optional;
 public interface QualificacaoProfissionalRepository extends JpaRepository<QualificacaoProfissional, Integer> {
 
     Optional<QualificacaoProfissional> findByCodigoCnq(String codigoCnq);
+
+    Optional<QualificacaoProfissional> findBySelfidQp(String selfidQp);
 }
 
