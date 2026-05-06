@@ -26,6 +26,9 @@ public class QualificacaoProfissional {
     @Column(name = "selfid_qp")
     private String selfidQp;
 
+    @Column(name = "id_referencial")
+    private Integer idReferencial;
+
     @Column(name = "denominacao")
     private String denominacao;
 

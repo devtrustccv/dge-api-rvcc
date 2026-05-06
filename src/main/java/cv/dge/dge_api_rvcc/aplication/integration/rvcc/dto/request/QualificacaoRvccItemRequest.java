@@ -6,6 +6,8 @@ import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record QualificacaoRvccItemRequest(
+        @JsonProperty("idReferencial")
+        Integer idReferencial,
         @JsonProperty("idQualificacao")
         Integer idQualificacao,
         @JsonProperty("selfId")

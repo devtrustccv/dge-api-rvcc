@@ -30,6 +30,12 @@ public class UnidadeCompetencia {
     @Column(name = "codigo_uc")
     private String codigoUc;
 
+    @Column(name = "id_uc_integracao")
+    private Integer idUcIntegracao;
+
+    @Column(name = "id_referencial")
+    private Integer idReferencial;
+
     @Column(name = "denominacao")
     private String denominacao;
 

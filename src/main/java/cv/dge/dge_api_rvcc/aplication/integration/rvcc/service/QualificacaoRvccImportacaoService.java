@@ -21,12 +21,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class QualificacaoRvccImportacaoService {
 
     private static final String ESTADO_ATIVO_SIGLA = "A";
@@ -42,36 +44,53 @@ public class QualificacaoRvccImportacaoService {
             throw new ImportacaoInvalidaException("O payload deve conter pelo menos uma qualificacao em 'data'.");
         }
 
+        log.info("Iniciando importacao RVCC com {} qualificacao(oes).", request.data().size());
         Map<String, QualificacaoProfissional> qualificacaoCache = new HashMap<>();
 
         for (QualificacaoRvccItemRequest item : request.data()) {
             validarItem(item);
+            boolean ativa = qualificacaoAtiva(item.estadoQualificacao());
+            QualificacaoProfissional qualificacao = obterOuCriarQualificacao(item, qualificacaoCache, ativa);
 
-            if (!qualificacaoAtiva(item.estadoQualificacao())) {
-                continue;
+            if (!ativa) {
+                desativarUnidadesEAtividadesDaQualificacao(qualificacao);
+                log.info(
+                        "Qualificacao RVCC marcada como inativa: id={}, codigo={}, estado recebido={}",
+                        qualificacao.getIdQualificacao(),
+                        qualificacao.getCodigoCnq(),
+                        normalizar(item.estadoQualificacao())
+                );
             }
 
-            QualificacaoProfissional qualificacao = obterOuCriarQualificacao(item, qualificacaoCache);
-            processarUnidadesCompetencia(item, qualificacao);
+            processarUnidadesCompetencia(item, qualificacao, ativa);
         }
 
+        log.info("Importacao RVCC concluida com sucesso.");
         return request;
     }
 
     private QualificacaoProfissional obterOuCriarQualificacao(
             QualificacaoRvccItemRequest item,
-            Map<String, QualificacaoProfissional> qualificacaoCache
+            Map<String, QualificacaoProfissional> qualificacaoCache,
+            boolean ativa
     ) {
+        Integer idQualificacaoExistente = item.idQualificacao();
         String codigoQualificacao = normalizar(item.codigoQualif());
         String selfidQp = resolverSelfidQp(item);
-        String cacheKey = construirChaveCache(selfidQp, codigoQualificacao);
+        String cacheKey = construirChaveCache(idQualificacaoExistente, selfidQp, codigoQualificacao);
 
         QualificacaoProfissional qualificacao = qualificacaoCache.get(cacheKey);
         if (qualificacao != null) {
-            return qualificacao;
+            qualificacao.setAtivo(ativa);
+            qualificacao.setIdReferencial(item.idReferencial());
+            return qualificacaoRepository.save(qualificacao);
         }
 
-        if (selfidQp != null) {
+        if (idQualificacaoExistente != null) {
+            qualificacao = qualificacaoRepository.findById(idQualificacaoExistente).orElse(null);
+        }
+
+        if (qualificacao == null && selfidQp != null) {
             qualificacao = qualificacaoRepository.findBySelfidQp(selfidQp).orElse(null);
         }
 
@@ -83,48 +102,108 @@ public class QualificacaoRvccImportacaoService {
             qualificacao = new QualificacaoProfissional();
             qualificacao.setSelfidQp(selfidQp);
             qualificacao.setCodigoCnq(codigoQualificacao);
+            qualificacao.setIdReferencial(item.idReferencial());
             qualificacao.setDenominacao(normalizar(item.denominacaoQualif()));
             qualificacao.setFamiliaProfissional(primeiroNaoVazio(
                     normalizar(item.denominacaoFamilia()),
                     normalizar(item.codigoFamilia())
             ));
             qualificacao.setNivelQnq(item.nivel());
-            qualificacao.setAtivo(Boolean.TRUE);
+            qualificacao.setAtivo(ativa);
+            qualificacao = qualificacaoRepository.save(qualificacao);
+            log.info(
+                    "Qualificacao RVCC criada: id={}, codigo={}, selfid_qp={}",
+                    qualificacao.getIdQualificacao(),
+                    qualificacao.getCodigoCnq(),
+                    qualificacao.getSelfidQp()
+            );
+        } else {
+            log.info(
+                    "Qualificacao RVCC existente reutilizada: id={}, codigo={}, selfid_qp={}",
+                    qualificacao.getIdQualificacao(),
+                    qualificacao.getCodigoCnq(),
+                    qualificacao.getSelfidQp()
+            );
+            qualificacao.setAtivo(ativa);
+            qualificacao.setIdReferencial(item.idReferencial());
             qualificacao = qualificacaoRepository.save(qualificacao);
         }
 
-        colocarNoCache(qualificacaoCache, qualificacao, selfidQp, codigoQualificacao);
+        colocarNoCache(qualificacaoCache, qualificacao, idQualificacaoExistente, selfidQp, codigoQualificacao);
         return qualificacao;
     }
 
     private void processarUnidadesCompetencia(
             QualificacaoRvccItemRequest item,
-            QualificacaoProfissional qualificacao
+            QualificacaoProfissional qualificacao,
+            boolean ativa
     ) {
         for (UnidadeCompetenciaRvccRequest unidadeRequest : safeList(item.unidadesCompetencia())) {
             validarUnidadeCompetencia(unidadeRequest, item.codigoQualif());
 
             String codigoUc = normalizar(unidadeRequest.codigo());
-            UnidadeCompetencia unidade = unidadeCompetenciaRepository
-                    .findByIdQualificacao_IdQualificacaoAndCodigoUc(qualificacao.getIdQualificacao(), codigoUc)
-                    .orElseGet(UnidadeCompetencia::new);
+            UnidadeCompetencia unidade = obterOuCriarUnidadeCompetencia(
+                    qualificacao,
+                    unidadeRequest,
+                    codigoUc,
+                    item.idReferencial()
+            );
 
             unidade.setIdQualificacao(qualificacao);
             unidade.setCodigoUc(codigoUc);
+            unidade.setIdUcIntegracao(unidadeRequest.id());
+            unidade.setIdReferencial(item.idReferencial());
             unidade.setDenominacao(normalizar(unidadeRequest.denominacao()));
             unidade.setCargaHoraria(parseInteger(unidadeRequest.cargaHorariaModulo(), "cargaHorariaModulo", codigoUc));
             unidade.setCodigoModuloFormativo(normalizar(unidadeRequest.codigoModulo()));
             unidade.setDenominacaoMf(normalizar(unidadeRequest.denominacaoModulo()));
-            unidade.setAtivo(Boolean.TRUE);
+            unidade.setAtivo(ativa);
             unidade = unidadeCompetenciaRepository.save(unidade);
+            log.info(
+                    "UC gravada: id_uc={}, id_qualificacao={}, codigo_uc={}, ativo={}",
+                    unidade.getIdUc(),
+                    qualificacao.getIdQualificacao(),
+                    unidade.getCodigoUc(),
+                    unidade.getAtivo()
+            );
 
-            processarAtividades(unidadeRequest, unidade);
+            processarAtividades(unidadeRequest, unidade, ativa);
         }
+    }
+
+    private UnidadeCompetencia obterOuCriarUnidadeCompetencia(
+            QualificacaoProfissional qualificacao,
+            UnidadeCompetenciaRvccRequest unidadeRequest,
+            String codigoUc,
+            Integer idReferencial
+    ) {
+        if (unidadeRequest.id() != null) {
+            UnidadeCompetencia unidade = unidadeCompetenciaRepository
+                    .findByIdQualificacao_IdQualificacaoAndIdReferencialAndIdUcIntegracao(
+                            qualificacao.getIdQualificacao(),
+                            idReferencial,
+                            unidadeRequest.id()
+                    )
+                    .orElse(null);
+
+            if (unidade != null) {
+                return unidade;
+            }
+        }
+
+        return unidadeCompetenciaRepository
+                .findByIdQualificacao_IdQualificacaoAndIdReferencialAndCodigoUc(
+                        qualificacao.getIdQualificacao(),
+                        idReferencial,
+                        codigoUc
+                )
+                .orElseGet(UnidadeCompetencia::new);
     }
 
     private void processarAtividades(
             UnidadeCompetenciaRvccRequest unidadeRequest,
-            UnidadeCompetencia unidade
+            UnidadeCompetencia unidade,
+            boolean ativa
     ) {
         for (AtividadeProfissionalRvccRequest atividadeRequest : safeList(unidadeRequest.atividadesProfissionais())) {
             validarAtividade(atividadeRequest, unidadeRequest.codigo());
@@ -140,9 +219,39 @@ public class QualificacaoRvccImportacaoService {
             atividade.setPonderacao(atividadeRequest.ponderacao());
             atividade.setRequisitos(formatarItensCodigoDenominacao(atividadeRequest.requisitos()));
             atividade.setConhecimentos(formatarConhecimentos(atividadeRequest.conhecimentos()));
-            atividade.setAtivo(Boolean.TRUE);
-            atividadeUnidadeCompetenciaRepository.save(atividade);
+            atividade.setAtivo(ativa);
+            atividade = atividadeUnidadeCompetenciaRepository.save(atividade);
+            log.info(
+                    "Atividade gravada: id_atividade={}, id_uc={}, codigo_atividade={}, ativo={}",
+                    atividade.getIdAtividade(),
+                    unidade.getIdUc(),
+                    atividade.getCodigoAtividade(),
+                    atividade.getAtivo()
+            );
         }
+    }
+
+    private void desativarUnidadesEAtividadesDaQualificacao(QualificacaoProfissional qualificacao) {
+        List<UnidadeCompetencia> unidades = unidadeCompetenciaRepository
+                .findAllByIdQualificacao_IdQualificacao(qualificacao.getIdQualificacao());
+
+        for (UnidadeCompetencia unidade : unidades) {
+            unidade.setAtivo(Boolean.FALSE);
+
+            List<AtividadeUnidadeCompetencia> atividades = atividadeUnidadeCompetenciaRepository
+                    .findAllByUnidadeCompetencia_IdUc(unidade.getIdUc());
+            for (AtividadeUnidadeCompetencia atividade : atividades) {
+                atividade.setAtivo(Boolean.FALSE);
+            }
+            atividadeUnidadeCompetenciaRepository.saveAll(atividades);
+        }
+
+        unidadeCompetenciaRepository.saveAll(unidades);
+        log.info(
+                "UC/AP desativadas para a qualificacao RVCC: id_qualificacao={}, total_uc={}",
+                qualificacao.getIdQualificacao(),
+                unidades.size()
+        );
     }
 
     private void validarItem(QualificacaoRvccItemRequest item) {
@@ -150,12 +259,8 @@ public class QualificacaoRvccImportacaoService {
             throw new ImportacaoInvalidaException("Foi encontrada uma qualificacao nula dentro de 'data'.");
         }
 
-        if (!qualificacaoAtiva(item.estadoQualificacao())) {
-            return;
-        }
-
         if (!StringUtils.hasText(item.codigoQualif())) {
-            throw new ImportacaoInvalidaException("Toda qualificacao ativa deve conter 'codigoQualif'.");
+            throw new ImportacaoInvalidaException("Toda qualificacao deve conter 'codigoQualif'.");
         }
 
         if (!StringUtils.hasText(item.denominacaoQualif())) {
@@ -296,10 +401,15 @@ public class QualificacaoRvccImportacaoService {
     private void colocarNoCache(
             Map<String, QualificacaoProfissional> cache,
             QualificacaoProfissional qualificacao,
+            Integer idQualificacao,
             String selfidQp,
             String codigoQualificacao
     ) {
-        cache.put(construirChaveCache(selfidQp, codigoQualificacao), qualificacao);
+        cache.put(construirChaveCache(idQualificacao, selfidQp, codigoQualificacao), qualificacao);
+
+        if (idQualificacao != null) {
+            cache.put("ID:" + idQualificacao, qualificacao);
+        }
 
         if (selfidQp != null) {
             cache.put("SELF:" + selfidQp, qualificacao);
@@ -310,7 +420,11 @@ public class QualificacaoRvccImportacaoService {
         }
     }
 
-    private String construirChaveCache(String selfidQp, String codigoQualificacao) {
+    private String construirChaveCache(Integer idQualificacao, String selfidQp, String codigoQualificacao) {
+        if (idQualificacao != null) {
+            return "ID:" + idQualificacao;
+        }
+
         if (selfidQp != null) {
             return "SELF:" + selfidQp;
         }
