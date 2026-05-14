@@ -153,8 +153,8 @@ public class CertificadoQualificacaoProfissionalReportService {
                     uc.codigo_uc,
                     uc.denominacao,
                     uc.carga_horaria,
-                    NULL AS validada,
-                    NULL AS resultado
+                    NULL::boolean AS validada,
+                    NULL::varchar AS resultado
                 FROM public.rvcc_t_unidade_competencia uc
                 WHERE uc.id_qualificacao = :idQualificacao
                   AND COALESCE(uc.ativo, true) = true
