@@ -125,41 +125,39 @@ public class CertificadoQualificacaoProfissionalReportService {
                 .addValue("idQualificacao", idQualificacao);
 
         List<UnidadeCompetenciaReportDto> avaliadas = jdbcTemplate.query("""
-                SELECT DISTINCT
-                    uc.id_uc,
-                    uc.codigo_uc,
-                    uc.denominacao,
-                    uc.carga_horaria,
-                    uca.validada,
-                    uca.resultado
-                FROM public.rvcc_t_avaliacao av
-                JOIN public.rvcc_t_unidade_competencia_avaliada uca
-                    ON uca.id_avaliacao = av.id_avaliacao
-                JOIN public.rvcc_t_unidade_competencia uc
-                    ON uc.id_uc = uca.id_uc
-                WHERE av.id_processo = :idProcesso
-                  AND uc.id_qualificacao = :idQualificacao
-                  AND COALESCE(uca.validada, false) = true
-                ORDER BY uc.codigo_uc
-                """, params, this::mapUnidadeCompetencia);
-
-        if (!avaliadas.isEmpty()) {
-            return avaliadas;
-        }
-
-        return jdbcTemplate.query("""
                 SELECT
                     uc.id_uc,
                     uc.codigo_uc,
                     uc.denominacao,
                     uc.carga_horaria,
-                    NULL::boolean AS validada,
-                    NULL::varchar AS resultado
-                FROM public.rvcc_t_unidade_competencia uc
-                WHERE uc.id_qualificacao = :idQualificacao
-                  AND COALESCE(uc.ativo, true) = true
+                    uc.media_final,
+                    uc.validada,
+                    uc.data_avaliacao,
+                    uc.resultado
+                FROM (
+                    SELECT DISTINCT ON (uc.codigo_uc)
+                        uc.id_uc,
+                        uc.codigo_uc,
+                        uc.denominacao,
+                        uc.carga_horaria,
+                        uca.media_final,
+                        uca.validada,
+                        uca.data_avaliacao,
+                        uca.resultado
+                    FROM public.rvcc_t_unidade_competencia_avaliada uca
+                    LEFT JOIN public.rvcc_t_avaliacao av
+                        ON av.id_avaliacao = uca.id_avaliacao
+                    JOIN public.rvcc_t_unidade_competencia uc
+                        ON uc.id_uc = uca.id_uc
+                    WHERE COALESCE(uca.id_processo, av.id_processo) = :idProcesso
+                      AND uc.id_qualificacao = :idQualificacao
+                      AND COALESCE(uca.validada, false) = true
+                    ORDER BY uc.codigo_uc, uca.data_avaliacao DESC NULLS LAST, uca.id_uc_avaliada DESC
+                ) uc
                 ORDER BY uc.codigo_uc
                 """, params, this::mapUnidadeCompetencia);
+
+        return avaliadas;
     }
 
     private DadosCertificado mapDadosCertificado(ResultSet rs, int rowNum) throws SQLException {
@@ -206,7 +204,9 @@ public class CertificadoQualificacaoProfissionalReportService {
                 rs.getString("denominacao"),
                 cargaHoraria,
                 cargaHoraria == null ? null : cargaHoraria + " Horas",
+                rs.getBigDecimal("media_final"),
                 rs.getObject("validada", Boolean.class),
+                format(rs.getObject("data_avaliacao", LocalDate.class)),
                 rs.getString("resultado")
         );
     }
@@ -234,8 +234,6 @@ public class CertificadoQualificacaoProfissionalReportService {
         campos.put("numeroCertificado", numeroCertificado);
         campos.put("codigoContraprovaCertificado", codigoContraprovaCertificado(dado.numProcesso(), dado.idProcesso()));
         campos.put("codigoContraprovaAlvara", dado.entidadeFormadora().numeroAlvara());
-        campos.put("unidadesCompetencia", unidades);
-        campos.put("saidasProfissionais", Collections.emptyList());
         return campos;
     }
 
