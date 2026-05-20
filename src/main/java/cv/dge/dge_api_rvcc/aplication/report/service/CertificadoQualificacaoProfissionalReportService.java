@@ -19,10 +19,17 @@ import java.util.Map;
 import java.util.Optional;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
 public class CertificadoQualificacaoProfissionalReportService {
@@ -30,13 +37,19 @@ public class CertificadoQualificacaoProfissionalReportService {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final String VIA_CERTIFICACAO_RVCC =
             "do processo de Reconhecimento, validacao e certificacao de competencias profissionais";
+    private static final String LOGOTIPO_ENTIDADE_FILE_NAME = "Logotipo.gif";
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
+    private final RestTemplate restTemplate;
+    private final String linkApiBase;
 
     public CertificadoQualificacaoProfissionalReportService(
-            @Qualifier("primaryDataSource") DataSource dataSource
+            @Qualifier("primaryDataSource") DataSource dataSource,
+            @Value("${link.api.base}") String linkApiBase
     ) {
         this.jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
+        this.restTemplate = new RestTemplate();
+        this.linkApiBase = linkApiBase;
     }
 
     public Optional<CertificadoQualificacaoProfissionalReportResponse> obterDados(
@@ -60,6 +73,7 @@ public class CertificadoQualificacaoProfissionalReportService {
                     c.data_nascimento,
                     c.tipo_documento,
                     c.numero_documento,
+                    e.id_entidade,
                     e.designacao_comercial,
                     e.num_alvara,
                     q.id_qualificacao,
@@ -174,7 +188,8 @@ public class CertificadoQualificacaoProfissionalReportService {
 
         EntidadeFormadoraReportDto entidade = new EntidadeFormadoraReportDto(
                 rs.getString("designacao_comercial"),
-                rs.getString("num_alvara")
+                rs.getString("num_alvara"),
+                obterLogotipoEntidadeUrl(getInteger(rs, "id_entidade"))
         );
 
         QualificacaoReportDto qualificacao = new QualificacaoReportDto(
@@ -231,10 +246,42 @@ public class CertificadoQualificacaoProfissionalReportService {
         campos.put("viaCertificacao", VIA_CERTIFICACAO_RVCC);
         campos.put("dataEmissao", format(dataEmissao));
         campos.put("nomeEntidadeFormadora", dado.entidadeFormadora().nome());
+        campos.put("logotipoEntidadeFormadora", dado.entidadeFormadora().logotipoUrl());
         campos.put("numeroCertificado", numeroCertificado);
         campos.put("codigoContraprovaCertificado", codigoContraprovaCertificado(dado.numProcesso(), dado.idProcesso()));
         campos.put("codigoContraprovaAlvara", dado.entidadeFormadora().numeroAlvara());
         return campos;
+    }
+
+    private String obterLogotipoEntidadeUrl(Integer idEntidade) {
+        if (idEntidade == null) {
+            return null;
+        }
+
+        String filePath = "certificacao_evcc/public/%d/LOGOTIPO_ENTIDADE_RVCC/%d/%s"
+                .formatted(LocalDate.now().getYear(), idEntidade, LOGOTIPO_ENTIDADE_FILE_NAME);
+        String url = UriComponentsBuilder.fromHttpUrl(linkApiBase)
+                .path("/api/documentos/public-url")
+                .queryParam("file_path", filePath)
+                .toUriString();
+
+        try {
+            ResponseEntity<Map<String, String>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<>() {
+                    }
+            );
+
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+                return null;
+            }
+
+            return response.getBody().get("url");
+        } catch (RestClientException exception) {
+            return null;
+        }
     }
 
     private String montarNumeroCertificado(String numProcesso, Integer idProcesso, LocalDate dataEmissao) {
