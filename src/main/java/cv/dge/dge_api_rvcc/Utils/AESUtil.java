@@ -1,4 +1,4 @@
-package cv.dge.dge_api_rvcc.Utils;
+package cv.dge.dge_api_rvcc.utils;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Base64;

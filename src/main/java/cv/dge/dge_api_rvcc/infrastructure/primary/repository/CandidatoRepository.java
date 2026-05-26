@@ -8,4 +8,3 @@ public interface CandidatoRepository extends JpaRepository<Candidato, Integer> {
 
     Optional<Candidato> findByNumeroDocumento(String numeroDocumento);
 }
-

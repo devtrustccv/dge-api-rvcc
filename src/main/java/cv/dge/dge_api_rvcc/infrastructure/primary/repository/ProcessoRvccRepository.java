@@ -7,4 +7,3 @@ public interface ProcessoRvccRepository extends JpaRepository<ProcessoRvcc, Inte
 
     boolean existsByNumProcesso(String numProcesso);
 }
-

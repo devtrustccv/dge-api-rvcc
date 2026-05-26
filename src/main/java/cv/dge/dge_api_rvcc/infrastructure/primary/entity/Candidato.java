@@ -103,4 +103,3 @@ public class Candidato {
     @Column(name = "id_pessoa")
     private Integer idPessoa;
 }
-

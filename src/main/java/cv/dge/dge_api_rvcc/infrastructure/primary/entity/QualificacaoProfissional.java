@@ -41,4 +41,3 @@ public class QualificacaoProfissional {
     @Column(name = "ativo")
     private Boolean ativo = Boolean.TRUE;
 }
-

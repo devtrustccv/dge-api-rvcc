@@ -18,4 +18,3 @@ public interface TipoEntidadeRepository extends JpaRepository<TipoEntidade, Inte
             """)
     List<Entidade> findEntidadesByCodigo(@Param("codigo") String codigo);
 }
-

@@ -11,4 +11,3 @@ public interface QualificacaoProfissionalRepository extends JpaRepository<Qualif
 
     Optional<QualificacaoProfissional> findBySelfidQp(String selfidQp);
 }
-

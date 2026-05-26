@@ -37,4 +37,3 @@ public class TipoEntidade {
     @JoinColumn(name = "id_entidade")
     private Entidade entidade;
 }
-

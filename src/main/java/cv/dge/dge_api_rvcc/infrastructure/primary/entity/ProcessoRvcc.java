@@ -57,4 +57,3 @@ public class ProcessoRvcc {
     @JoinColumn(name = "id_entidade")
     private Entidade idEntidade;
 }
-

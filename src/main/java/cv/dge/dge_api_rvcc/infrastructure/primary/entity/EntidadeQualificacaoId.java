@@ -24,4 +24,3 @@ public class EntidadeQualificacaoId implements Serializable {
     @Column(name = "id_qualificacao")
     private Integer idQualificacao;
 }
-

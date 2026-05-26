@@ -9,4 +9,3 @@ public interface EntidadeQualificacaoRepository extends JpaRepository<EntidadeQu
 
     List<EntidadeQualificacao> findAllByEntidade_IdEntidade(Integer idEntidade);
 }
-

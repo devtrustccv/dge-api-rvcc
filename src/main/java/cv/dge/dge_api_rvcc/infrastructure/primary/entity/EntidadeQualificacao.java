@@ -38,4 +38,3 @@ public class EntidadeQualificacao {
     @Column(name = "estado_acreditacao")
     private String estadoAcreditacao;
 }
-

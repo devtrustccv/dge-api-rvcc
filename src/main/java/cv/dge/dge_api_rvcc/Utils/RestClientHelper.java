@@ -1,4 +1,4 @@
-package cv.dge.dge_api_rvcc.Utils;
+package cv.dge.dge_api_rvcc.utils;
 
 
 import org.apache.logging.log4j.LogManager;
@@ -29,7 +29,7 @@ public class RestClientHelper {
             Map<String, String> headersMap) {
 
         try {
-            // Configurar cabeçalhos
+            // Configurar cabecalhos
             HttpHeaders headers = new HttpHeaders();
 
             if (headersMap != null) {
@@ -42,20 +42,20 @@ public class RestClientHelper {
                     }
                 });
             } else {
-                headers.setContentType(MediaType.APPLICATION_JSON); // padrão
+                headers.setContentType(MediaType.APPLICATION_JSON); // padrao
             }
 
-            // Criar entidade de requisição
+            // Criar entidade de requisicao
             HttpEntity<Object> entity = new HttpEntity<>(requestBody, headers);
 
-            // Fazer a requisição e retornar a resposta
+            // Fazer a requisicao e retornar a resposta
             return restTemplate.exchange(url, method, entity, responseType);
 
         } catch (HttpClientErrorException e) {
             logger.error("Erro HTTP ao acessar '{}': status={} - body={}", url, e.getStatusCode(), e.getResponseBodyAsString());
             return ResponseEntity.status(e.getStatusCode()).build();
         } catch (Exception e) {
-            logger.error("Erro inesperado ao enviar requisição para '{}': {}", url, e.getMessage(), e);
+            logger.error("Erro inesperado ao enviar requisicao para '{}': {}", url, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

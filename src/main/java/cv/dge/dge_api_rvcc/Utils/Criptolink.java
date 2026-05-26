@@ -1,4 +1,4 @@
-package cv.dge.dge_api_rvcc.Utils;
+package cv.dge.dge_api_rvcc.utils;
 
 public class Criptolink {
 

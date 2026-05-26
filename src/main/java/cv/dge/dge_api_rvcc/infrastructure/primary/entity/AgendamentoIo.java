@@ -66,4 +66,3 @@ public class AgendamentoIo {
     @Column(name = "tipo_agendamento")
     private String tipoAgendamento;
 }
-

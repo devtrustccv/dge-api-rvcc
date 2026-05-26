@@ -50,4 +50,3 @@ public class Entidade {
     @Column(name = "id_organica")
     private String idOrganica;
 }
-

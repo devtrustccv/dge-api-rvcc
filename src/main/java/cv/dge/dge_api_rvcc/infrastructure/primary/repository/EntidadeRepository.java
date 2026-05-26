@@ -9,4 +9,3 @@ public interface EntidadeRepository extends JpaRepository<Entidade, Integer> {
 
     Optional<Entidade> findByNif(String nif);
 }
-
