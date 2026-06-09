@@ -1,0 +1,550 @@
+{
+  "info": {
+    "_postman_id": "1fb2fbf2-9414-4a9b-a6fd-dgeapirvcc001",
+    "name": "DGE API RVCC - Testes",
+    "description": "Collection para testar os endpoints do projeto dge-api-rvcc. Base padrao: http://localhost:8081/api. Ajuste as variaveis idEntidade, idProcesso e idQualificacao conforme os dados existentes no banco.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8081/api",
+      "type": "string"
+    },
+    {
+      "key": "idEntidade",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "idProcesso",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "idQualificacao",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "pais",
+      "value": "Cabo Verde",
+      "type": "string"
+    },
+    {
+      "key": "ilha",
+      "value": "Santiago",
+      "type": "string"
+    },
+    {
+      "key": "tipoGeografia",
+      "value": "CONCELHO",
+      "type": "string"
+    },
+    {
+      "key": "idPai",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Documentacao",
+      "item": [
+        {
+          "name": "OpenAPI JSON",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v3/api-docs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v3",
+                "api-docs"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Entidades",
+      "item": [
+        {
+          "name": "Importar entidades PAEF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": [\n    {\n      \"nif\": \"599000001\",\n      \"designacao_comercial\": \"Centro de Formacao Teste RVCC\",\n      \"ilha\": \"Santiago\",\n      \"concelho\": \"Praia\",\n      \"id_concelho\": 1,\n      \"endereco\": \"Achada Santo Antonio, Praia\",\n      \"num_alvara\": \"ALV-TESTE-001\",\n      \"estado_alvara\": \"Ativo\",\n      \"qualificacoes_ativas\": [\n        {\n          \"codigo_cnq\": \"RVCC-TST-001\",\n          \"selfid_qp\": \"SELF-RVCC-TST-001\",\n          \"id_formacao\": \"FORM-TST-001\",\n          \"denominacao\": \"Tecnico de Informatica de Gestao - Teste\",\n          \"familia\": \"Informatica\",\n          \"codigo_familia\": \"INF\",\n          \"nivel_qnq\": 4\n        }\n      ],\n      \"qualificacoes_inativas\": [\n        {\n          \"codigo_cnq\": \"RVCC-TST-999\",\n          \"selfid_qp\": \"SELF-RVCC-TST-999\",\n          \"id_formacao\": \"FORM-TST-999\",\n          \"denominacao\": \"Qualificacao Inativa Teste\",\n          \"familia\": \"Administracao\",\n          \"codigo_familia\": \"ADM\",\n          \"nivel_qnq\": 3\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/entidades/importacao",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "entidades",
+                "importacao"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test('Resposta tem data', function () {",
+                  "  pm.expect(pm.response.json()).to.have.property('data');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar entidades IO para select",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/entidades/io/select",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "entidades",
+                "io",
+                "select"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Resposta e array', function () {",
+                  "  pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Geografia",
+      "item": [
+        {
+          "name": "Listar ilhas por pais",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/geografia/ilhas?pais={{pais}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "geografia",
+                "ilhas"
+              ],
+              "query": [
+                {
+                  "key": "pais",
+                  "value": "{{pais}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar concelhos por ilha",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/geografia/concelho?ilha={{ilha}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "geografia",
+                "concelho"
+              ],
+              "query": [
+                {
+                  "key": "ilha",
+                  "value": "{{ilha}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar nacionalidades",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/geografia/nacionalidade",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "geografia",
+                "nacionalidade"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar localidade por tipo e pai",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/geografia/localidade?tipo={{tipoGeografia}}&idPai={{idPai}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "geografia",
+                "localidade"
+              ],
+              "query": [
+                {
+                  "key": "tipo",
+                  "value": "{{tipoGeografia}}"
+                },
+                {
+                  "key": "idPai",
+                  "value": "{{idPai}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Qualificacoes RVCC",
+      "item": [
+        {
+          "name": "Importar qualificacoes RVCC - v1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": [\n    {\n      \"idReferencial\": 1001,\n      \"idQualificacao\": null,\n      \"selfId\": \"SELF-RVCC-IMP-001\",\n      \"codigoQualif\": \"RVCC-IMP-001\",\n      \"denominacaoQualif\": \"Tecnico de Informatica de Gestao - RVCC\",\n      \"nivel\": 4,\n      \"estadoQualificacao\": \"ATIVO\",\n      \"codigoFamilia\": \"INF\",\n      \"denominacaoFamilia\": \"Informatica\",\n      \"unidadesCompetencia\": [\n        {\n          \"id\": 2001,\n          \"codigo\": \"UC-RVCC-001\",\n          \"denominacao\": \"Aplicar tecnicas de suporte informatico\",\n          \"codigoModulo\": \"MF-RVCC-001\",\n          \"denominacaoModulo\": \"Suporte informatico\",\n          \"cargaHorariaModulo\": \"50\",\n          \"atividadesProfissionais\": [\n            {\n              \"codigo\": \"AP-RVCC-001\",\n              \"descricao\": \"Diagnosticar e resolver incidentes de software\",\n              \"ponderacao\": 40,\n              \"requisitos\": [\n                {\n                  \"codigo\": \"REQ-001\",\n                  \"denominacao\": \"Conhecimentos basicos de sistemas operativos\"\n                }\n              ],\n              \"conhecimentos\": [\n                {\n                  \"codigoUf\": \"UF-001\",\n                  \"denominacaoUf\": \"Sistemas operativos\",\n                  \"codigoMf\": \"MF-001\",\n                  \"denominacaoMf\": \"Fundamentos de suporte\",\n                  \"codigo\": \"CON-001\",\n                  \"denominacao\": \"Instalacao e configuracao\",\n                  \"tipo\": \"SABER\"\n                }\n              ]\n            }\n          ]\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/qualificacoes-rvcc/importacao",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "qualificacoes-rvcc",
+                "importacao"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test('Resposta tem data', function () {",
+                  "  pm.expect(pm.response.json()).to.have.property('data');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Importar qualificacoes RVCC - alias sem v1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": [\n    {\n      \"idReferencial\": 1002,\n      \"selfId\": \"SELF-RVCC-IMP-002\",\n      \"codigoQualif\": \"RVCC-IMP-002\",\n      \"denominacaoQualif\": \"Tecnico Administrativo - RVCC\",\n      \"nivel\": 3,\n      \"estadoQualificacao\": \"A\",\n      \"codigoFamilia\": \"ADM\",\n      \"denominacaoFamilia\": \"Administracao\",\n      \"unidadesCompetencia\": []\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/qualificacoes-rvcc/importacao",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "qualificacoes-rvcc",
+                "importacao"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Pedidos RVCC",
+      "item": [
+        {
+          "name": "Criar pedido RVCC",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_entidade\": {{idEntidade}},\n  \"tipo_documento\": \"BI\",\n  \"numero_documento\": \"{{numeroDocumentoTeste}}\",\n  \"data_emissao\": \"2020-01-15\",\n  \"data_validade\": \"2030-01-15\",\n  \"nome_completo\": \"Candidato Teste RVCC\",\n  \"data_nascimento\": \"1988-05-20\",\n  \"nif\": \"199000001\",\n  \"genero\": \"M\",\n  \"nacionalidade\": \"Cabo-verdiana\",\n  \"ilha\": \"Santiago\",\n  \"concelho\": \"Praia\",\n  \"morada\": \"Palmarejo, Praia\",\n  \"endereco_atual\": \"Palmarejo, Praia\",\n  \"email\": \"candidato.teste@example.com\",\n  \"telemovel\": \"9912345\",\n  \"situacao_emprego\": \"Empregado\",\n  \"empregado\": \"SIM\",\n  \"entidade_empregadora\": \"Empresa Teste, Lda\",\n  \"profissao\": \"Tecnico de Informatica\",\n  \"habilitacao_literaria\": \"12 ano\",\n  \"disponibilidade_horario\": \"Pos-laboral\",\n  \"idade\": 37,\n  \"id_pessoa\": 10001\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pedido/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pedido",
+                "create"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var sufixo = Date.now().toString().slice(-8);",
+                  "pm.variables.set('numeroDocumentoTeste', 'TESTE-RVCC-' + sufixo);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "if (json.idProcesso) {",
+                  "  pm.collectionVariables.set('idProcesso', json.idProcesso);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Relatorios",
+      "item": [
+        {
+          "name": "Certificado qualificacao profissional - v1",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/reporter/certificados/qualificacao-profissional/{{idProcesso}}?idQualificacao={{idQualificacao}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "reporter",
+                "certificados",
+                "qualificacao-profissional",
+                "{{idProcesso}}"
+              ],
+              "query": [
+                {
+                  "key": "idQualificacao",
+                  "value": "{{idQualificacao}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado', function () {",
+                  "  pm.expect([200, 404]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Certificado qualificacao profissional - alias sem v1",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reporter/certificados/qualificacao-profissional/{{idProcesso}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reporter",
+                "certificados",
+                "qualificacao-profissional",
+                "{{idProcesso}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado', function () {",
+                  "  pm.expect([200, 404]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('Resposta nao e erro 500', function () {",
+          "  pm.expect(pm.response.code).to.not.equal(500);",
+          "});"
+        ]
+      }
+    }
+  ]
+}

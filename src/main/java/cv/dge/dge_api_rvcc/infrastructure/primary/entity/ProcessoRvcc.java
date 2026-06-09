@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
@@ -43,6 +44,9 @@ public class ProcessoRvcc {
 
     @Column(name = "data_conclusao")
     private LocalDateTime dataConclusao;
+
+    @Column(name = "data_geracao_certificado")
+    private LocalDate dataGeracaoCertificado;
 
     @Column(name = "observacoes")
     private String observacoes;

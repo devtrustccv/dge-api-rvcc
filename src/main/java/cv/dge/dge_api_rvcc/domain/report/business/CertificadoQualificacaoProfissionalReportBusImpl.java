@@ -70,6 +70,7 @@ public class CertificadoQualificacaoProfissionalReportBusImpl implements Certifi
                     p.num_processo,
                     p.data_conclusao,
                     p.data_submissao,
+                    p.data_geracao_certificado,
                     c.nome_completo,
                     c.concelho,
                     c.nacionalidade,
@@ -112,14 +113,27 @@ public class CertificadoQualificacaoProfissionalReportBusImpl implements Certifi
         );
         LocalDate dataEmissao = LocalDate.now();
         String numeroCertificado = montarNumeroCertificado(dado.numProcesso(), dado.idProcesso(), dataEmissao);
+        LocalDate dataGeracaoCertificado = obterDataGeracaoCertificado(
+                dado.idProcesso(),
+                dado.qualificacao().idQualificacao(),
+                dado.dataGeracaoCertificado()
+        );
+        atualizarDataGeracaoCertificado(dado.idProcesso(), dataGeracaoCertificado);
 
-        Map<String, Object> campos = montarCampos(dado, unidades, dataEmissao, numeroCertificado);
+        Map<String, Object> campos = montarCampos(
+                dado,
+                unidades,
+                dataEmissao,
+                dataGeracaoCertificado,
+                numeroCertificado
+        );
 
         return Optional.of(new CertificadoQualificacaoProfissionalReportResponse(
                 dado.idProcesso(),
                 dado.numProcesso(),
                 numeroCertificado,
                 format(dataEmissao),
+                format(dataGeracaoCertificado),
                 dado.dataFinalizacaoFormacao(),
                 VIA_CERTIFICACAO_RVCC,
                 codigoContraprovaCertificado(dado.numProcesso(), dado.idProcesso()),
@@ -178,6 +192,49 @@ public class CertificadoQualificacaoProfissionalReportBusImpl implements Certifi
         return avaliadas;
     }
 
+    private LocalDate obterDataGeracaoCertificado(
+            Integer idProcesso,
+            Integer idQualificacao,
+            LocalDate dataGeracaoCertificadoAtual
+    ) {
+        if (idQualificacao == null) {
+            return dataGeracaoCertificadoAtual;
+        }
+
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("idProcesso", idProcesso)
+                .addValue("idQualificacao", idQualificacao);
+
+        LocalDate dataAvaliacao = jdbcTemplate.query("""
+                SELECT MAX(uca.data_avaliacao) AS data_avaliacao
+                FROM public.rvcc_t_unidade_competencia_avaliada uca
+                LEFT JOIN public.rvcc_t_avaliacao av
+                    ON av.id_avaliacao = uca.id_avaliacao
+                JOIN public.rvcc_t_unidade_competencia uc
+                    ON uc.id_uc = uca.id_uc
+                WHERE COALESCE(uca.id_processo, av.id_processo) = :idProcesso
+                  AND uc.id_qualificacao = :idQualificacao
+                  AND COALESCE(uca.validada, false) = true
+                """, params, rs -> rs.next() ? rs.getObject("data_avaliacao", LocalDate.class) : null);
+
+        return dataAvaliacao != null ? dataAvaliacao : dataGeracaoCertificadoAtual;
+    }
+
+    private void atualizarDataGeracaoCertificado(Integer idProcesso, LocalDate dataGeracaoCertificado) {
+        if (dataGeracaoCertificado == null) {
+            return;
+        }
+
+        jdbcTemplate.update("""
+                UPDATE public.rvcc_t_processo_rvcc
+                SET data_geracao_certificado = :dataGeracaoCertificado
+                WHERE id_processo = :idProcesso
+                  AND data_geracao_certificado IS DISTINCT FROM :dataGeracaoCertificado
+                """, new MapSqlParameterSource()
+                .addValue("idProcesso", idProcesso)
+                .addValue("dataGeracaoCertificado", dataGeracaoCertificado));
+    }
+
     private DadosCertificado mapDadosCertificado(ResultSet rs, int rowNum) throws SQLException {
         String naturalidade = geografiaService.findNameById(rs.getString("naturalidade"));
         String concelho = geografiaService.findNameById(rs.getString("concelho"));
@@ -211,6 +268,7 @@ public class CertificadoQualificacaoProfissionalReportBusImpl implements Certifi
         return new DadosCertificado(
                 rs.getInt("id_processo"),
                 rs.getString("num_processo"),
+                rs.getObject("data_geracao_certificado", LocalDate.class),
                 format(toLocalDate(rs.getTimestamp("data_conclusao"))),
                 format(toLocalDate(rs.getTimestamp("data_submissao"))),
                 candidato,
@@ -238,6 +296,7 @@ public class CertificadoQualificacaoProfissionalReportBusImpl implements Certifi
             DadosCertificado dado,
             List<UnidadeCompetenciaReportDto> unidades,
             LocalDate dataEmissao,
+            LocalDate dataGeracaoCertificado,
             String numeroCertificado
     ) {
         Map<String, Object> campos = new LinkedHashMap<>();
@@ -253,6 +312,7 @@ public class CertificadoQualificacaoProfissionalReportBusImpl implements Certifi
         campos.put("familiaProfissional", dado.qualificacao().familiaProfissional());
         campos.put("viaCertificacao", VIA_CERTIFICACAO_RVCC);
         campos.put("dataEmissao", format(dataEmissao));
+        campos.put("dataGeracaoCertificado", format(dataGeracaoCertificado));
         campos.put("nomeEntidadeFormadora", dado.entidadeFormadora().nome());
         campos.put("logotipoEntidadeFormadora", dado.entidadeFormadora().logotipoUrl());
         campos.put("numeroCertificado", numeroCertificado);
@@ -348,6 +408,7 @@ public class CertificadoQualificacaoProfissionalReportBusImpl implements Certifi
     private record DadosCertificado(
             Integer idProcesso,
             String numProcesso,
+            LocalDate dataGeracaoCertificado,
             String dataFinalizacaoFormacao,
             String dataSubmissao,
             CandidatoReportDto candidato,
