@@ -9,6 +9,7 @@ public record CertificadoQualificacaoProfissionalReportResponse(
         String numeroCertificado,
         String dataEmissao,
         String dataGeracaoCertificado,
+        String dataAvaliacao,
         String dataFinalizacaoFormacao,
         String viaCertificacao,
         String codigoContraprovaCertificado,
