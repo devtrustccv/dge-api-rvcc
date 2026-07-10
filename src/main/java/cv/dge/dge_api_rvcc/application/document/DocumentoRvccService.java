@@ -31,7 +31,7 @@ public class DocumentoRvccService {
     public DocumentoRvccService(
             RestTemplate restTemplate,
             DocRelacaoRepository docRelacaoRepository,
-            @Value("${api.base.service.url}") String baseServiceUrl
+            @Value("${link.api.base}") String baseServiceUrl
     ) {
         this.restTemplate = restTemplate;
         this.docRelacaoRepository = docRelacaoRepository;
