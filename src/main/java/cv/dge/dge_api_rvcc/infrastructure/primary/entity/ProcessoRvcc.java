@@ -60,4 +60,7 @@ public class ProcessoRvcc {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_entidade")
     private Entidade idEntidade;
+
+    @Column(name = "cod_acolhimento")
+    private String codAcolhimento;
 }

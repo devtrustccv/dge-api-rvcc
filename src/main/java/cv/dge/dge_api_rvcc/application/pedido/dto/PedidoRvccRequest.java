@@ -52,6 +52,8 @@ public record PedidoRvccRequest(
         @JsonProperty("idade")
         Integer idade,
         @JsonProperty("id_pessoa")
-        Integer idPessoa
+        Integer idPessoa,
+        @JsonProperty("cod_acolhimento")
+        String codAcolhimento
 ) {
 }

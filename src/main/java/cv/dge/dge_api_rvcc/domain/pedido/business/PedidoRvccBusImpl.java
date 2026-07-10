@@ -13,6 +13,10 @@ import cv.dge.dge_api_rvcc.infrastructure.primary.entity.AgendamentoIo;
 import cv.dge.dge_api_rvcc.infrastructure.primary.entity.Candidato;
 import cv.dge.dge_api_rvcc.infrastructure.primary.entity.ProcessoRvcc;
 import cv.dge.dge_api_rvcc.infrastructure.primary.entity.Entidade;
+import cv.dge.dge_api_rvcc.application.document.DocumentoRvccService;
+import cv.dge.dge_api_rvcc.infrastructure.emprego.DetalhesAcolhimento;
+import cv.dge.dge_api_rvcc.infrastructure.emprego.repository.AgendamentoEntrevistaRepository;
+import cv.dge.dge_api_rvcc.infrastructure.emprego.repository.DetalhesAcolhimentoRepository;
 import cv.dge.dge_api_rvcc.infrastructure.primary.repository.EntidadeRepository;
 import cv.dge.dge_api_rvcc.infrastructure.primary.repository.AgendamentoIoRepository;
 import cv.dge.dge_api_rvcc.infrastructure.primary.repository.CandidatoRepository;
@@ -31,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.HtmlUtils;
 
 @Component
@@ -59,10 +64,13 @@ public class PedidoRvccBusImpl implements PedidoRvccBus {
     private final EntidadeRepository entidadeRepository;
     private final AcompanhamentoService acompanhamentoService;
     private final NotificationService notificationService;
+    private final DetalhesAcolhimentoRepository detalhesAcolhimentoRepository;
+    private final AgendamentoEntrevistaRepository agendamentoEntrevistaRepository;
+    private final DocumentoRvccService documentoRvccService;
     
 
     @Transactional
-    public PedidoRvccResponse criarPedido(PedidoRvccRequest request) {
+    public PedidoRvccResponse criarPedido(PedidoRvccRequest request, MultipartFile file) {
         log.info("Iniciando criacao de pedido RVCC: {}", request);
         try {
             if (request == null) {
@@ -93,6 +101,28 @@ public class PedidoRvccBusImpl implements PedidoRvccBus {
             }
             Entidade entidade = obterEntidadeObrigatoria(request.idEntidade());
 
+            String codAcolhimento = normalizar(request.codAcolhimento());
+            validarObrigatorio(codAcolhimento, "cod_acolhimento");
+
+            DetalhesAcolhimento acolhimento = detalhesAcolhimentoRepository
+                    .findByNumInscricao(codAcolhimento)
+                    .orElseThrow(() -> new PedidoRvccInvalidoException(
+                            "O codigo de acolhimento \"" + codAcolhimento + "\" nao foi encontrado no sistema de emprego."
+                    ));
+
+            log.info("Validando entrevista para acolhimento id={} numInscricao={}", acolhimento.getId(), codAcolhimento);
+
+            boolean entrevistaValida = agendamentoEntrevistaRepository
+                    .existsEntrevistaValida(acolhimento.getId(), "REALIZADO", "1");
+
+            log.info("Resultado validacao entrevista: entrevistaValida={}", entrevistaValida);
+
+            if (!entrevistaValida) {
+                throw new PedidoRvccInvalidoException(
+                        "O acolhimento \"" + codAcolhimento + "\" nao possui entrevista realizada com parecer IO favoravel."
+                );
+            }
+
             ProcessoRvcc processo = new ProcessoRvcc();
             processo.setIdCandidato(candidato);
             processo.setNumProcesso(gerarNumeroProcesso());
@@ -101,6 +131,7 @@ public class PedidoRvccBusImpl implements PedidoRvccBus {
             processo.setUtilizadorRegisto(utilizadorRegisto);
             processo.setDatareg(agora);
             processo.setIdEntidade(entidade);
+            processo.setCodAcolhimento(codAcolhimento);
             processo = processoRvccRepository.save(processo);
             log.info("Processo criado: {}", processo.getNumProcesso());
 
@@ -113,6 +144,15 @@ public class PedidoRvccBusImpl implements PedidoRvccBus {
             agendamentoIo.setTipoAgendamento(TIPO_AGENDAMENTO_VALIDACAO);
             agendamentoIo = agendamentoIoRepository.save(agendamentoIo);
             log.info("Agendamento criado: {}", agendamentoIo.getIdAgendamento());
+
+            if (file != null && !file.isEmpty()) {
+                try {
+                    documentoRvccService.guardarDocumento(file, "pedido_rvcc", processo.getIdProcesso(), processo.getNumProcesso());
+                    log.info("Documento guardado para o processo: {}", processo.getNumProcesso());
+                } catch (Exception e) {
+                    log.warn("Falha ao guardar documento para o processo {}: {}", processo.getNumProcesso(), e.getMessage());
+                }
+            }
 
             acompanhamentoService.criarAcompanhamento(
                     montarAcompanhamento(candidato, processo, entidade, agora)

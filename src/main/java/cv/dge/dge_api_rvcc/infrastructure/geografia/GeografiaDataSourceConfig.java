@@ -20,7 +20,10 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(
-        basePackages = "cv.dge.dge_api_rvcc.infrastructure.geografia.repository",
+        basePackages = {
+            "cv.dge.dge_api_rvcc.infrastructure.geografia.repository",
+            "cv.dge.dge_api_rvcc.infrastructure.tertiary.repository"
+        },
         entityManagerFactoryRef = "tertiaryEntityManagerFactory",
         transactionManagerRef = "tertiaryTransactionManager"
 )
@@ -53,7 +56,10 @@ public class GeografiaDataSourceConfig {
         props.put("hibernate.default_schema", "public");
 
         return builder.dataSource(dataSource)
-                .packages("cv.dge.dge_api_rvcc.infrastructure.geografia")
+                .packages(
+                    "cv.dge.dge_api_rvcc.infrastructure.geografia",
+                    "cv.dge.dge_api_rvcc.infrastructure.tertiary"
+                )
                 .persistenceUnit("tertiary")
                 .properties(props)
                 .build();
