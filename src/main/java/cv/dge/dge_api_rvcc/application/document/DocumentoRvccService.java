@@ -22,7 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 public class DocumentoRvccService {
 
-    private static final String APP_CODE = "certificacao_rvcc";
+    private static final String APP_CODE = "certificacao_evcc";
 
     private final RestTemplate restTemplate;
     private final DocRelacaoRepository docRelacaoRepository;
