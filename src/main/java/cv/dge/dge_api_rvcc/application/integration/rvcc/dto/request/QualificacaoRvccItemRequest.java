@@ -23,6 +23,8 @@ public record QualificacaoRvccItemRequest(
         String codigoFamilia,
         @JsonProperty("denominacaoFamilia")
         String denominacaoFamilia,
+        @JsonProperty("saidasProfissionais")
+        List<ItemCodigoDenominacaoRequest> saidasProfissionais,
         @JsonProperty("unidadesCompetencia")
         List<UnidadeCompetenciaRvccRequest> unidadesCompetencia
 ) {

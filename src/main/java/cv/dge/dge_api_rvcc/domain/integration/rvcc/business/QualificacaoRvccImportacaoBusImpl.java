@@ -9,9 +9,11 @@ import cv.dge.dge_api_rvcc.application.integration.rvcc.dto.request.UnidadeCompe
 import cv.dge.dge_api_rvcc.common.exception.ImportacaoInvalidaException;
 import cv.dge.dge_api_rvcc.infrastructure.primary.entity.AtividadeUnidadeCompetencia;
 import cv.dge.dge_api_rvcc.infrastructure.primary.entity.QualificacaoProfissional;
+import cv.dge.dge_api_rvcc.infrastructure.primary.entity.SaidaProfissional;
 import cv.dge.dge_api_rvcc.infrastructure.primary.entity.UnidadeCompetencia;
 import cv.dge.dge_api_rvcc.infrastructure.primary.repository.AtividadeUnidadeCompetenciaRepository;
 import cv.dge.dge_api_rvcc.infrastructure.primary.repository.QualificacaoProfissionalRepository;
+import cv.dge.dge_api_rvcc.infrastructure.primary.repository.SaidaProfissionalRepository;
 import cv.dge.dge_api_rvcc.infrastructure.primary.repository.UnidadeCompetenciaRepository;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,6 +39,7 @@ public class QualificacaoRvccImportacaoBusImpl implements QualificacaoRvccImport
     private final QualificacaoProfissionalRepository qualificacaoRepository;
     private final UnidadeCompetenciaRepository unidadeCompetenciaRepository;
     private final AtividadeUnidadeCompetenciaRepository atividadeUnidadeCompetenciaRepository;
+    private final SaidaProfissionalRepository saidaProfissionalRepository;
 
     @Transactional
     public ImportacaoQualificacoesRvccRequest importar(ImportacaoQualificacoesRvccRequest request) {
@@ -62,6 +65,7 @@ public class QualificacaoRvccImportacaoBusImpl implements QualificacaoRvccImport
                 );
             }
 
+            processarSaidasProfissionais(item, qualificacao);
             processarUnidadesCompetencia(item, qualificacao, ativa);
         }
 
@@ -131,6 +135,39 @@ public class QualificacaoRvccImportacaoBusImpl implements QualificacaoRvccImport
 
         colocarNoCache(qualificacaoCache, qualificacao, idQualificacaoExistente, selfidQp, codigoQualificacao);
         return qualificacao;
+    }
+
+    private void processarSaidasProfissionais(
+            QualificacaoRvccItemRequest item,
+            QualificacaoProfissional qualificacao
+    ) {
+        for (ItemCodigoDenominacaoRequest saidaRequest : safeList(item.saidasProfissionais())) {
+            String denominacao = normalizar(saidaRequest.denominacao());
+            if (denominacao == null) {
+                continue;
+            }
+
+            SaidaProfissional saida = saidaProfissionalRepository
+                    .findByQualificacao_IdQualificacaoAndIdReferencialAndDenominacao(
+                            qualificacao.getIdQualificacao(),
+                            item.idReferencial(),
+                            denominacao
+                    )
+                    .orElseGet(SaidaProfissional::new);
+
+            saida.setQualificacao(qualificacao);
+            saida.setIdReferencial(item.idReferencial());
+            saida.setCodigo(normalizar(saidaRequest.codigo()));
+            saida.setDenominacao(denominacao);
+            saidaProfissionalRepository.save(saida);
+
+            log.info(
+                    "Saida profissional gravada: id_qualificacao={}, id_referencial={}, denominacao={}",
+                    qualificacao.getIdQualificacao(),
+                    item.idReferencial(),
+                    denominacao
+            );
+        }
     }
 
     private void processarUnidadesCompetencia(
