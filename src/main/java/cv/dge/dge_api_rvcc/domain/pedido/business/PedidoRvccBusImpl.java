@@ -113,7 +113,7 @@ public class PedidoRvccBusImpl implements PedidoRvccBus {
             log.info("Validando entrevista para acolhimento id={} numInscricao={}", acolhimento.getId(), codAcolhimento);
 
             boolean entrevistaValida = agendamentoEntrevistaRepository
-                    .existsEntrevistaValida(acolhimento.getId(), "REALIZADO", "1");
+                    .existsEntrevistaValida(acolhimento.getId(), "REALIZADO", "1", "RVCC");
 
             log.info("Resultado validacao entrevista: entrevistaValida={}", entrevistaValida);
 

@@ -27,4 +27,7 @@ public class AgendamentoEntrevista {
 
     @Column(name = "parecer_io")
     private String parecerIo;
+
+    @Column(name = "tipo_servico")
+    private String tipoServico;
 }

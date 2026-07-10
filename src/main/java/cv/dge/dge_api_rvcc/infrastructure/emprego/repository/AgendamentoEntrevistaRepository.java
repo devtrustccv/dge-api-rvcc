@@ -10,9 +10,11 @@ public interface AgendamentoEntrevistaRepository extends JpaRepository<Agendamen
     @Query("SELECT COUNT(a) > 0 FROM AgendamentoEntrevista a " +
             "WHERE a.idAcolhimento = :idAcolhimento " +
             "AND a.dmStatusEntrevista = :status " +
-            "AND a.parecerIo = :parecer")
+            "AND a.parecerIo = :parecer " +
+            "AND a.tipoServico = :tipoServico")
     boolean existsEntrevistaValida(
             @Param("idAcolhimento") Integer idAcolhimento,
             @Param("status") String status,
-            @Param("parecer") String parecer);
+            @Param("parecer") String parecer,
+            @Param("tipoServico") String tipoServico);
 }
