@@ -72,7 +72,7 @@ public class DocumentoRvccService {
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
         ResponseEntity<String> response = restTemplate.exchange(
-                baseServiceUrl + "/documentos",
+                "/api/" + baseServiceUrl + "/documentos",
                 HttpMethod.POST,
                 new HttpEntity<>(body, headers),
                 String.class
@@ -88,7 +88,7 @@ public class DocumentoRvccService {
 
     public List<DocRelacaoEntity> listarDocumentos(Integer idRelacao, String tipoRelacao) {
         return docRelacaoRepository.findByIdRelacaoAndTipoRelacaoAndAppCode(
-                Long.valueOf(idRelacao), tipoRelacao, APP_CODE);
+                java.math.BigDecimal.valueOf(idRelacao), tipoRelacao, APP_CODE);
     }
 
     private String buildPath(String tipoRelacao, String numProcesso, Integer idRelacao, String fileName, String ext) {

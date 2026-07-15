@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,7 +37,7 @@ public class DocRelacaoEntity {
     private String name;
 
     @Column(name = "id_relacao")
-    private Long idRelacao;
+    private BigDecimal idRelacao;
 
     @Column(name = "id_tp_doc")
     private Long idTpDoc;
