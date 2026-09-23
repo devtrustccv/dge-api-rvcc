@@ -1,0 +1,3 @@
+ALTER TABLE IF EXISTS public.rvcc_t_processo_rvcc
+    ADD COLUMN IF NOT EXISTS etapa VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS etapa_desc VARCHAR(255);
