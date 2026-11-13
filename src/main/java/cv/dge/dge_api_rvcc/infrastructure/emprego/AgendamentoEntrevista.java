@@ -14,7 +14,6 @@ import lombok.Setter;
 @Entity
 @Table(name = "emprego_t_agendamento_entrevista")
 public class AgendamentoEntrevista {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
